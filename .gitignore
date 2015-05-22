@@ -1,0 +1,7 @@
+VERSION
+Makefile
+extra/
+llvm/
+logs/
+package.sh
+startenv.sh
