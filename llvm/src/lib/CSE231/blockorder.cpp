@@ -39,12 +39,13 @@ namespace {
 					
 					
 					if(StoreInst::classof(I) ) {
-						StoreInst * storeInst = (StoreInst*) I; //this cast is fucking broken
+						StoreInst * storeInst = (StoreInst *) &(*I); 
 						errs() << "\toperand: \n";
 						errs() << "\t\t";
 						storeInst->getValueOperand()->dump();
 						
 						errs() << "\tdest: \n";
+						errs() << "\t\t";
 						storeInst->getPointerOperand()->dump();
 					}
 					else {
