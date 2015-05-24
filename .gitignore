@@ -5,3 +5,6 @@ llvm/
 logs/
 package.sh
 startenv.sh
+*.ll
+*.bc
+
