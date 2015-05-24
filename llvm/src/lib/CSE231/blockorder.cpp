@@ -5,13 +5,19 @@
 // 		
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "CountStaticInstructions"
+#define DEBUG_TYPE "BlockOrder"
+#include "llvm/IR/Module.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/Instruction.h"
+#include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/Format.h"
-#include <map>
+
 #include <stdio.h>
 
 using namespace llvm;
@@ -27,7 +33,9 @@ namespace {
 			errs() << "Begin block with name: ";
 			errs().write_escaped(B.getName()) << "\n";
 			for (BasicBlock::iterator I = B.begin(); I != B.end(); ++I) { 
-				I->dump(); //this prints to console immediately
+				if (I->isBinaryOp() || StoreInst::classof(I)) {
+					I->dump(); //this prints to console immediately
+				}
 			}
 			return false;
 		}
