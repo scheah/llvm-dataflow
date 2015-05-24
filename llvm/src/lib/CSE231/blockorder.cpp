@@ -55,6 +55,9 @@ namespace {
 							errs() << "\t\t";
 							operand->dump();
 						}
+						errs() << "\tdest: \n"; //In LLVM, the instruction *is* the same as it's result
+						errs() << "\t\t";
+						I->dump();
 					}
 					
 
