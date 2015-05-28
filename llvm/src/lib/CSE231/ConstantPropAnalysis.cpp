@@ -10,7 +10,7 @@ void ConstantPropAnalysis::applyFlowFunction(Instruction * instruction) {
 
 void ConstantPropAnalysis::dump() {
     for (map<string,unsigned>::iterator i = _map.begin(); i != _map.end(); i++) {
-        errs() << i->first << "\n";
+        errs() << i->first << "  " << i->second << "\n";
     }
 }
 

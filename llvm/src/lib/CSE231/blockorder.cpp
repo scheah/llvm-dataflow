@@ -21,6 +21,7 @@
 
 #include <llvm/ADT/StringRef.h>
 #include "llvm/Support/CFG.h"
+#include "ConstantPropAnalysis.h"
 
 #include <stdio.h>
 
@@ -32,7 +33,8 @@ namespace {
 		static char ID; // Pass identification, replacement for typeid
 		map<StringRef, BasicBlock*> visitedBlocks; //for use in detecting loop
 		vector<BasicBlock*> blockOrder; // for use in remembering order of traversed blocks
-		
+        ConstantPropAnalysis analysis;
+
 		BlockOrder() : FunctionPass(ID) {}
 
 		virtual bool runOnFunction(Function &F) {
@@ -56,6 +58,9 @@ namespace {
 				errs() << "\tInstructions:\n";
 				for (BasicBlock::iterator I = B->begin(); I != B->end(); ++I) { 
 					errs() << "\t\t";
+                    
+                    analysis.applyFlowFunction(I);
+
 					//if (I->isBinaryOp() || StoreInst::classof(I) || I->isShift()) { //filter out instructions that we can compute dataflow facts from?
 						I->dump(); //this prints to console immediately
 						/*if(StoreInst::classof(I) ) {
@@ -81,6 +86,10 @@ namespace {
 						}
 					}*/
 				}
+
+                errs() << "Dump map\n";
+                analysis.dump();
+
 				// check successors for presence of a loop
 				errs() << "\tSucessors:\n";
 				//TerminatorInst * terminator = B->getTerminator();

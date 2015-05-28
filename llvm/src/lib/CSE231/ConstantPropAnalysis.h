@@ -11,10 +11,10 @@ public:
 
 class ConstantPropAnalysis : Analysis {
 public:
+    void applyFlowFunction(Instruction * instruction);
     void dump();
 
 private:
-    void applyFlowFunction(Instruction * instruction);
     void reset();
     void handleStoreInst(StoreInst * storeInst);
     
