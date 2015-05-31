@@ -16,6 +16,10 @@ void ConstantPropAnalysis::applyFlowFunction() {
     }
 }
 
+map<string,unsigned> ConstantPropAnalysis::getOutgoingEdge() {
+    return _outgoingEdge;
+}
+
 void ConstantPropAnalysis::dump() {
     for (map<string,unsigned>::iterator i = _outgoingEdge.begin(); i != _outgoingEdge.end(); i++) {
         errs() << i->first << "  " << i->second << "\n";

@@ -6,6 +6,7 @@ using namespace std;
 class ConstantPropAnalysis {
 public:
 	ConstantPropAnalysis(Instruction * inst, map<string, unsigned> incoming);
+    map<string, unsigned> getOutgoingEdge();
     void applyFlowFunction();
     void dump();
 private:
