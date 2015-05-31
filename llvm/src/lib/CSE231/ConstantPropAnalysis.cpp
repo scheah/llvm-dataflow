@@ -14,6 +14,10 @@ void ConstantPropAnalysis::applyFlowFunction() {
 		_outgoingEdge.insert(_incomingEdge.begin(), _incomingEdge.end());
         handleStoreInst((StoreInst *) _instruction);
     }
+	else {//temp 
+		_outgoingEdge.clear(); 
+		_outgoingEdge.insert(_incomingEdge.begin(), _incomingEdge.end());
+	}
 }
 
 map<string,unsigned> ConstantPropAnalysis::getOutgoingEdge() {

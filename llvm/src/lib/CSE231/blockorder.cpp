@@ -33,7 +33,8 @@ namespace {
 		static char ID; // Pass identification, replacement for typeid
 		map<StringRef, BasicBlock*> visitedBlocks; //for use in detecting loop
 		vector<BasicBlock*> blockOrder; // for use in remembering order of traversed blocks
-        ConstantPropAnalysis analysis;
+
+		map<StringRef, vector<ConstantPropAnalysis *> > blockInstAnalysis; //for use propagating dataflow facts
 
 		BlockOrder() : FunctionPass(ID) {}
 
@@ -43,58 +44,42 @@ namespace {
 			for (Function::iterator B = F.begin(); B != F.end(); ++B) { 
 				errs() << "Begin block with name: ";
 				errs().write_escaped(B->getName()) << "\n";
+				
 				// check predecessors to perform merge
+				vector< map<string, unsigned> > predecessorEdges;
 				errs() << "\tPredecessors:\n";
 				for (pred_iterator PI = pred_begin(B); PI != pred_end(B); ++PI) {
   					BasicBlock *pred = *PI;
 					errs() << "\t\t";
 					errs().write_escaped(pred->getName());
 					errs() << "\n";
-
+					// get final instruction's outgoing edge from each predecessor block
+					if (!blockInstAnalysis[pred->getName()].empty()) // some predecessors have not been visited (a loop edge from a future block)
+						predecessorEdges.push_back(blockInstAnalysis[pred->getName()].back()->getOutgoingEdge());
 				}
+				// perform mergings			
+				map<string, unsigned> incomingEdge;
+				if (!predecessorEdges.empty())
+					incomingEdge = predecessorEdges.front(); // temporary
+
+				// record block visit
 				visitedBlocks[B->getName()] = &(*B);
 				blockOrder.push_back(&(*B));
+				
 				// collect dataflow facts
 				errs() << "\tInstructions:\n";
 				for (BasicBlock::iterator I = B->begin(); I != B->end(); ++I) { 
 					errs() << "\t\t";
-                    
-                    analysis.applyFlowFunction(I);
-
-					//if (I->isBinaryOp() || StoreInst::classof(I) || I->isShift()) { //filter out instructions that we can compute dataflow facts from?
-						I->dump(); //this prints to console immediately
-						/*if(StoreInst::classof(I) ) {
-							StoreInst * storeInst = (StoreInst *) &(*I); 
-							errs() << "\toperand: \n";
-							errs() << "\t\t";
-							storeInst->getValueOperand()->dump();
-					
-							errs() << "\tdest: \n";
-							errs() << "\t\t";
-							storeInst->getPointerOperand()->dump();
-						}
-						else {
-							errs() << "\toperands: \n";
-							for (unsigned int i = 0; i < I->getNumOperands(); i++) {
-								Value * operand = I->getOperand(i);
-								errs() << "\t\t";
-								operand->dump();
-							}
-							errs() << "\tdest: \n"; //In LLVM, the instruction *is* the same as it's result
-							errs() << "\t\t";
-							I->dump();
-						}
-					}*/
+                    ConstantPropAnalysis * analysis = new ConstantPropAnalysis(&(*I), incomingEdge);
+					blockInstAnalysis[B->getName()].push_back(analysis);
+					analysis->applyFlowFunction();
+                   	I->dump();
+					analysis->dump();
+					incomingEdge = analysis->getOutgoingEdge(); // for next analysis
 				}
-
-                errs() << "Dump map\n";
-                analysis.dump();
 
 				// check successors for presence of a loop
 				errs() << "\tSucessors:\n";
-				//TerminatorInst * terminator = B->getTerminator();
-				//for (unsigned int i = 0; i < terminator->getNumSuccessors(); i++) {
-					//BasicBlock *successor = terminator->getSuccessor(i);
 				for (succ_iterator SI = succ_begin(B); SI != succ_end(B); ++SI) {
 					BasicBlock *successor = *SI;
 					errs() << "\t\t";
@@ -108,7 +93,7 @@ namespace {
 						errs() << "\n";
 				}
 			}
-			return false;
+			return false; // NOTE WE WILL HAVE TO CHANGE THIS
 		}
 
 		void blockLoop(BasicBlock *start, BasicBlock *end) {
