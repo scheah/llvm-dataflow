@@ -59,8 +59,14 @@ namespace {
 				}
 				// perform mergings			
 				map<string, unsigned> incomingEdge;
-				if (!predecessorEdges.empty())
-					incomingEdge = predecessorEdges.front(); // temporary
+				if (predecessorEdges.size() == 1)
+					incomingEdge = predecessorEdges.front();
+                else if (predecessorEdges.size() >= 2) {
+                    incomingEdge = ConstantPropAnalysis::merge(predecessorEdges[0], predecessorEdges[1]);
+                    for (unsigned int i = 2; i < predecessorEdges.size(); i++) {
+                        incomingEdge = ConstantPropAnalysis::merge(incomingEdge, predecessorEdges[2]);
+                    }
+                }
 
 				// record block visit
 				visitedBlocks[B->getName()] = &(*B);

@@ -32,7 +32,7 @@ map<string,unsigned> ConstantPropAnalysis::merge(map<string,unsigned> edge1, map
 
         for (map<string,unsigned>::iterator j = edge2.begin(); j != edge2.end(); j++) {
             // If item is in both edges, erase from outgoing edge and the second map.
-            if (i->first == j->first) {
+            if ( (i->first == j->first) && (i->second != j->second) ) {
                 edge2.erase(i->first);
                 isInBothEdges = true;
                 break;
