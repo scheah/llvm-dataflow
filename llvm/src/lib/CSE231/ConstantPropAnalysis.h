@@ -3,23 +3,17 @@
 using namespace llvm;
 using namespace std;
 
-class Analysis {
+class ConstantPropAnalysis {
 public:
-    virtual void applyFlowFunction(Instruction * instruction) = 0;
-
-};
-
-class ConstantPropAnalysis : Analysis {
-public:
-    void applyFlowFunction(Instruction * instruction);
+	ConstantPropAnalysis(Instruction * inst, map<string, unsigned> incoming);
+    void applyFlowFunction();
     void dump();
-
 private:
+	Instruction * _instruction;
+	map<string, unsigned> _incomingEdge;
+	map<string, unsigned> _outgoingEdge;
     void reset();
     void handleStoreInst(StoreInst * storeInst);
-    
-
-    map<string, unsigned> _map;
 
 };
 
