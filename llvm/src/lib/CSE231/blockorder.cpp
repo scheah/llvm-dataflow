@@ -111,6 +111,70 @@ namespace {
 				if (blockOrder[i] == end)
 					endIndex = i;
 			}
+			map<StringRef, BasicBlock*> visitedBlocks; //for use in detecting nested loop
+			while (true) {
+				for (unsigned int i = startIndex; i <= endIndex; i++) {
+					BasicBlock * currentBlock = blockOrder[i];
+					errs() << "Begin !!!LOOP!!! block with name: ";
+					errs().write_escaped(currentBlock->getName()) << "\n";
+					// check predecessors to perform merge
+					vector< map<string, unsigned> > predecessorEdges;
+					errs() << "\tPredecessors:\n";
+					for (pred_iterator PI = pred_begin(currentBlock); PI != pred_end(currentBlock); ++PI) {
+						BasicBlock *pred = *PI;
+						errs() << "\t\t";
+						errs().write_escaped(pred->getName());
+						errs() << "\n";
+						// get final instruction's outgoing edge from each predecessor block
+						if (!blockInstAnalysis[pred->getName()].empty()) // some predecessors have not been visited (a loop edge from a future block)
+							predecessorEdges.push_back(blockInstAnalysis[pred->getName()].back()->getOutgoingEdge());
+					}
+					// perform mergings			
+					map<string, unsigned> incomingEdge;
+					if (predecessorEdges.size() == 1)
+						incomingEdge = predecessorEdges.front();
+					else if (predecessorEdges.size() >= 2) {
+						incomingEdge = ConstantPropAnalysis::merge(predecessorEdges[0], predecessorEdges[1]);
+						for (unsigned int i = 2; i < predecessorEdges.size(); i++) {
+							incomingEdge = ConstantPropAnalysis::merge(incomingEdge, predecessorEdges[2]);
+						}
+					}
+					// record block visit
+					visitedBlocks[currentBlock->getName()] = currentBlock;
+					// collect dataflow facts
+					errs() << "\tInstructions:\n";
+					for (unsigned int j = 0; j < blockInstAnalysis[currentBlock->getName()].size(); j++) { 
+						errs() << "\t\t";
+						ConstantPropAnalysis * analysis = blockInstAnalysis[currentBlock->getName()][j];
+						map<string,unsigned> originalOut = analysis->getOutgoingEdge();
+						analysis->setIncomingEdge(incomingEdge);
+						analysis->applyFlowFunction();
+						analysis->getInstruction()->dump();
+						analysis->dump();
+						if(ConstantPropAnalysis::equal(originalOut, analysis->getOutgoingEdge())) {
+							errs() << "Encountered fixed dataflow fact --- !!!ENDING LOOP!!!\n";
+							return; //we are done
+						}
+						incomingEdge = analysis->getOutgoingEdge(); // for next analysis
+					}
+
+					// check successors for presence of a loop
+					errs() << "\tSucessors:\n";
+					for (succ_iterator SI = succ_begin(currentBlock); SI != succ_end(currentBlock); ++SI) {
+						BasicBlock *successor = *SI;
+						errs() << "\t\t";
+						errs().write_escaped(successor->getName());
+						BasicBlock* blockIfVisited = visitedBlocks[successor->getName()];
+						if (blockIfVisited) {
+							errs() << " !!!VISITED BEFORE!!!\n";
+							blockLoop(blockIfVisited, currentBlock); // handle loop
+						}
+						else
+							errs() << "\n";
+					}
+				}
+				visitedBlocks.clear(); //IMPORTANT, otherwise detect nested loops on subsequent loops
+			}
 
 		}
 	};
