@@ -20,8 +20,17 @@ void ConstantPropAnalysis::applyFlowFunction() {
 	}
 }
 
+Instruction * ConstantPropAnalysis::getInstruction() {
+    return _instruction;
+}
+
 map<string,unsigned> ConstantPropAnalysis::getOutgoingEdge() {
     return _outgoingEdge;
+}
+
+void ConstantPropAnalysis::setIncomingEdge(map<string,unsigned> incoming) {
+    _incomingEdge.clear();    
+    _incomingEdge.insert(incoming.begin(), incoming.end());
 }
 
 map<string,unsigned> ConstantPropAnalysis::merge(map<string,unsigned> edge1, map<string,unsigned> edge2) {
@@ -52,10 +61,28 @@ map<string,unsigned> ConstantPropAnalysis::merge(map<string,unsigned> edge1, map
     return outgoingEdge;
 }
 
+bool ConstantPropAnalysis::equal(map<string,unsigned> edge1, map<string,unsigned> edge2) {
+    if(edge1.size() != edge2.size())
+        return false;
+
+    for (map<string,unsigned>::iterator i = edge1.begin(); i != edge1.end(); i++) {
+        if (edge1[i->first] != edge2[i->first])
+            return false;
+    }
+
+    return true;
+}
+
 void ConstantPropAnalysis::dump() {
+    errs() << "INCOMING:\n";
+    for (map<string,unsigned>::iterator i = _incomingEdge.begin(); i != _incomingEdge.end(); i++) {
+        errs() << i->first << "  " << i->second << "\n";
+    }
+    errs() << "OUTGOING:\n";
     for (map<string,unsigned>::iterator i = _outgoingEdge.begin(); i != _outgoingEdge.end(); i++) {
         errs() << i->first << "  " << i->second << "\n";
     }
+    errs() << "--------------------------------------------------------\n";
 }
 
 void ConstantPropAnalysis::reset() {

@@ -31,7 +31,6 @@ using namespace std;
 namespace {
 	struct BlockOrder : public FunctionPass {
 		static char ID; // Pass identification, replacement for typeid
-		map<StringRef, BasicBlock*> visitedBlocks; //for use in detecting loop
 		vector<BasicBlock*> blockOrder; // for use in remembering order of traversed blocks
 
 		map<StringRef, vector<ConstantPropAnalysis *> > blockInstAnalysis; //for use propagating dataflow facts
@@ -39,6 +38,7 @@ namespace {
 		BlockOrder() : FunctionPass(ID) {}
 
 		virtual bool runOnFunction(Function &F) {
+            map<StringRef, BasicBlock*> visitedBlocks; //for use in detecting loop
 			errs() << "BEGIN FUNCTION: ";
 			errs().write_escaped(F.getName()) << "\n";
 			for (Function::iterator B = F.begin(); B != F.end(); ++B) { 
@@ -93,7 +93,7 @@ namespace {
 					BasicBlock* blockIfVisited = visitedBlocks[successor->getName()];
 					if (blockIfVisited) {
 						errs() << " !!!VISITED BEFORE!!!\n";
-						blockLoop(blockIfVisited, &(*B));
+						blockLoop(blockIfVisited, &(*B)); // handle loop
 					}
 					else
 						errs() << "\n";
@@ -103,16 +103,15 @@ namespace {
 		}
 
 		void blockLoop(BasicBlock *start, BasicBlock *end) {
-			int startIndex;
-			int endIndex;
+			unsigned int startIndex;
+			unsigned int endIndex;
 			for (unsigned int i = 0; i < blockOrder.size(); i++) {
 				if (blockOrder[i] == start) 
 					startIndex = i;
 				if (blockOrder[i] == end)
 					endIndex = i;
 			}
-			errs() << "\t\t\tstartIndex: " << startIndex << "\n";
-			errs() << "\t\t\tendIndex: " << endIndex << "\n";
+
 		}
 	};
 }
