@@ -46,7 +46,7 @@ namespace {
 				errs().write_escaped(B->getName()) << "\n";
 				
 				// check predecessors to perform merge
-				vector< map<string, unsigned> > predecessorEdges;
+				vector< map<string, int> > predecessorEdges;
 				errs() << "\tPredecessors:\n";
 				for (pred_iterator PI = pred_begin(B); PI != pred_end(B); ++PI) {
   					BasicBlock *pred = *PI;
@@ -54,11 +54,14 @@ namespace {
 					errs().write_escaped(pred->getName());
 					errs() << "\n";
 					// get final instruction's outgoing edge from each predecessor block
-					if (!blockInstAnalysis[pred->getName()].empty()) // some predecessors have not been visited (a loop edge from a future block)
+					if (!blockInstAnalysis[pred->getName()].empty()) {// some predecessors have not been visited (a loop edge from a future block)
 						predecessorEdges.push_back(blockInstAnalysis[pred->getName()].back()->getOutgoingEdge());
+					}
+					else 
+						errs() << "\t\t\tNo incoming edge from this\n";
 				}
 				// perform mergings			
-				map<string, unsigned> incomingEdge;
+				map<string, int> incomingEdge;
 				if (predecessorEdges.size() == 1)
 					incomingEdge = predecessorEdges.front();
                 else if (predecessorEdges.size() >= 2) {
@@ -118,7 +121,7 @@ namespace {
 					errs() << "Begin !!!LOOP!!! block with name: ";
 					errs().write_escaped(currentBlock->getName()) << "\n";
 					// check predecessors to perform merge
-					vector< map<string, unsigned> > predecessorEdges;
+					vector< map<string, int> > predecessorEdges;
 					errs() << "\tPredecessors:\n";
 					for (pred_iterator PI = pred_begin(currentBlock); PI != pred_end(currentBlock); ++PI) {
 						BasicBlock *pred = *PI;
@@ -130,7 +133,7 @@ namespace {
 							predecessorEdges.push_back(blockInstAnalysis[pred->getName()].back()->getOutgoingEdge());
 					}
 					// perform mergings			
-					map<string, unsigned> incomingEdge;
+					map<string, int> incomingEdge;
 					if (predecessorEdges.size() == 1)
 						incomingEdge = predecessorEdges.front();
 					else if (predecessorEdges.size() >= 2) {
@@ -146,7 +149,7 @@ namespace {
 					for (unsigned int j = 0; j < blockInstAnalysis[currentBlock->getName()].size(); j++) { 
 						errs() << "\t\t";
 						ConstantPropAnalysis * analysis = blockInstAnalysis[currentBlock->getName()][j];
-						map<string,unsigned> originalOut = analysis->getOutgoingEdge();
+						map<string,int> originalOut = analysis->getOutgoingEdge();
 						analysis->setIncomingEdge(incomingEdge);
 						analysis->applyFlowFunction();
 						analysis->getInstruction()->dump();
