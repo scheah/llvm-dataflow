@@ -1,5 +1,4 @@
 #include "ConstantPropAnalysis.h"
-#include "llvm/IR/Constants.h"
 #include "llvm/Support/raw_ostream.h"
 
 ConstantPropAnalysis::ConstantPropAnalysis(Instruction * inst, map<string, int> incoming) {
@@ -13,6 +12,9 @@ void ConstantPropAnalysis::applyFlowFunction() {
 		_outgoingEdge.clear(); 
 		_outgoingEdge.insert(_incomingEdge.begin(), _incomingEdge.end());
         handleStoreInst((StoreInst *) _instruction);
+    }
+    else if (_instruction->isBinaryOp()) {
+            
     }
 	else {//temp 
 		_outgoingEdge.clear(); 
@@ -85,13 +87,44 @@ void ConstantPropAnalysis::reset() {
 }
 
 void ConstantPropAnalysis::handleStoreInst(StoreInst * storeInst) {
-
-    ConstantInt* CI = dyn_cast<ConstantInt>(storeInst->getValueOperand());
-    if (!CI || CI->getBitWidth() > 32) {
+    ConstantInt* CI = tryGetConstant(storeInst->getValueOperand());
+    if (CI == NULL) {
 		errs() << "[ConstantPropAnalysis::handleStoreInst] ERROR\n";
         return;
     }
+
     string name = storeInst->getPointerOperand()->getName().str();
     _outgoingEdge[name] = CI->getSExtValue();
+}
+
+ConstantInt * ConstantPropAnalysis::tryGetConstant(Value * value) {
+    ConstantInt* CI = dyn_cast<ConstantInt>(value);
+    if (!CI || CI->getBitWidth() > 32) {
+		errs() << "[ConstantPropAnalysis::handleStoreInst] ERROR\n";
+        return NULL;
+    }
+
+    return CI;
+}
+
+void ConstantPropAnalysis::handleBinaryOp(Instruction * inst) {
+    ConstantInt* CI = tryGetConstant(inst->getOperand(0));
+    string variable = inst->getOperand(1)->getName().str();
+    
+    if (CI == NULL) {
+        CI = tryGetConstant(inst->getOperand(1));
+        variable = inst->getOperand(0)->getName().str();
+    }
+
+    if (CI == NULL || _incomingEdge.count(variable) == 0) {
+        errs() << "No constant in binary op or variable is not in incoming edge.\n";
+        return;
+    }
+  
+    switch (inst->getOpcode()) {
+        case Instruction::Add:
+            _outgoingEdge[variable] = CI->getSExtValue() + _incomingEdge[variable]; 
+            break;
+    }
 }
 
