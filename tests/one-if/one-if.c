@@ -9,6 +9,11 @@ int main(void)
     }
     else {
         i = i + 5;
+        i = 10 + 7;
+        i = 10 - i;
+        i = i - 10;
+        i = 10 / i;
+        i = i / 10;
     }
 
     return i;

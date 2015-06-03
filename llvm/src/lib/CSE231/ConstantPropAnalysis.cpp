@@ -110,20 +110,45 @@ ConstantInt * ConstantPropAnalysis::tryGetConstant(Value * value) {
 void ConstantPropAnalysis::handleBinaryOp(Instruction * inst) {
     ConstantInt* CI = tryGetConstant(inst->getOperand(0));
     string variable = inst->getOperand(1)->getName().str();
-    
+    int position = 1;
+
     if (CI == NULL) {
         CI = tryGetConstant(inst->getOperand(1));
         variable = inst->getOperand(0)->getName().str();
+        position = 0;
     }
 
     if (CI == NULL || _incomingEdge.count(variable) == 0) {
         errs() << "No constant in binary op or variable is not in incoming edge.\n";
         return;
     }
-  
+
     switch (inst->getOpcode()) {
         case Instruction::Add:
             _outgoingEdge[variable] = CI->getSExtValue() + _incomingEdge[variable]; 
+            break;
+
+        case Instruction::Mul:
+            _outgoingEdge[variable] = CI->getSExtValue() * _incomingEdge[variable];
+            break;
+
+        case Instruction::Sub:
+            if (position == 1) {
+                _outgoingEdge[variable] = CI->getSExtValue() - _incomingEdge[variable];
+            }
+            else {
+                _outgoingEdge[variable] = _incomingEdge[variable] - CI->getSExtValue();
+            }
+            break;
+
+        case Instruction::SDiv:
+        case Instruction::UDiv:
+            if (position == 1) {
+                _outgoingEdge[variable] = CI->getSExtValue() / _incomingEdge[variable];
+            }
+            else {
+                _outgoingEdge[variable] = _incomingEdge[variable] / CI->getSExtValue();
+            }
             break;
     }
 }
