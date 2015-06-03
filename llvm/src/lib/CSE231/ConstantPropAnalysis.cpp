@@ -6,7 +6,6 @@ ConstantPropAnalysis::ConstantPropAnalysis(Instruction * inst, map<string, int> 
 	_incomingEdge = incoming;
 }
 
-
 void ConstantPropAnalysis::applyFlowFunction() {
     if (StoreInst::classof(_instruction)) {
 		_outgoingEdge.clear(); 
@@ -87,68 +86,58 @@ void ConstantPropAnalysis::reset() {
 }
 
 void ConstantPropAnalysis::handleStoreInst(StoreInst * storeInst) {
-    ConstantInt* CI = tryGetConstant(storeInst->getValueOperand());
-    if (CI == NULL) {
+    int value;
+    if (!tryGetConstantValue(storeInst->getValueOperand(), &value)) {
 		errs() << "[ConstantPropAnalysis::handleStoreInst] ERROR\n";
         return;
     }
 
     string name = storeInst->getPointerOperand()->getName().str();
-    _outgoingEdge[name] = CI->getSExtValue();
+    _outgoingEdge[name] = value;
 }
 
-ConstantInt * ConstantPropAnalysis::tryGetConstant(Value * value) {
-    ConstantInt* CI = dyn_cast<ConstantInt>(value);
-    if (!CI || CI->getBitWidth() > 32) {
-		errs() << "[ConstantPropAnalysis::handleStoreInst] ERROR\n";
-        return NULL;
+bool ConstantPropAnalysis::tryGetConstantValue(Value * value, int * constant) {
+    ConstantInt * CI = dyn_cast<ConstantInt>(value);
+    if (CI && CI->getBitWidth() <= 32) {
+        *constant = CI->getSExtValue();
+        return true;
     }
 
-    return CI;
+    map<string,int>::iterator iterator = _incomingEdge.find(value->getName().str());
+
+    if (iterator != _incomingEdge.end()) {
+        *constant = iterator->second;
+        return true;
+    }
+
+    return false;
 }
 
 void ConstantPropAnalysis::handleBinaryOp(Instruction * inst) {
-    ConstantInt* CI = tryGetConstant(inst->getOperand(0));
-    string variable = inst->getOperand(1)->getName().str();
-    int position = 1;
+    int operand1;
+    int operand2;
 
-    if (CI == NULL) {
-        CI = tryGetConstant(inst->getOperand(1));
-        variable = inst->getOperand(0)->getName().str();
-        position = 0;
-    }
-
-    if (CI == NULL || _incomingEdge.count(variable) == 0) {
+    if (!tryGetConstantValue(inst->getOperand(0), &operand1) || !tryGetConstantValue(inst->getOperand(1), &operand2)) {
         errs() << "No constant in binary op or variable is not in incoming edge.\n";
         return;
     }
 
     switch (inst->getOpcode()) {
         case Instruction::Add:
-            _outgoingEdge[variable] = CI->getSExtValue() + _incomingEdge[variable]; 
+            //_outgoingEdge[variable] = operand1 + operand2;
             break;
 
         case Instruction::Mul:
-            _outgoingEdge[variable] = CI->getSExtValue() * _incomingEdge[variable];
+            //_outgoingEdge[variable] = operand1 * operand2;
             break;
 
         case Instruction::Sub:
-            if (position == 1) {
-                _outgoingEdge[variable] = CI->getSExtValue() - _incomingEdge[variable];
-            }
-            else {
-                _outgoingEdge[variable] = _incomingEdge[variable] - CI->getSExtValue();
-            }
+            //_outgoingEdge[variable] = operand1 - operand2;
             break;
 
         case Instruction::SDiv:
         case Instruction::UDiv:
-            if (position == 1) {
-                _outgoingEdge[variable] = CI->getSExtValue() / _incomingEdge[variable];
-            }
-            else {
-                _outgoingEdge[variable] = _incomingEdge[variable] / CI->getSExtValue();
-            }
+            //_outgoingEdge[variable] = operand1 / operand2;
             break;
     }
 }
