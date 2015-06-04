@@ -46,7 +46,7 @@ namespace {
 				errs().write_escaped(B->getName()) << "\n";
 				
 				// check predecessors to perform merge
-				vector< map<string, int> > predecessorEdges;
+				vector< ConstantLattice* > predecessorEdges;
 				errs() << "\tPredecessors:\n";
 				for (pred_iterator PI = pred_begin(B); PI != pred_end(B); ++PI) {
   					BasicBlock *pred = *PI;
@@ -57,11 +57,16 @@ namespace {
 					if (!blockInstAnalysis[pred->getName()].empty()) {// some predecessors have not been visited (a loop edge from a future block)
 						predecessorEdges.push_back(blockInstAnalysis[pred->getName()].back()->getOutgoingEdge());
 					}
-					else 
-						errs() << "\t\t\tNo incoming edge from this\n";
+					else {
+						errs() << "\t\t\tNo incoming edge from this, pushing bottom (full set)\n";
+						map<string,ConstantInt*> empty;
+						predecessorEdges.push_back(new ConstantLattice(false,true,empty)); //mem leak here
+					}
 				}
-				// perform mergings			
-				map<string, int> incomingEdge;
+				// perform mergings	
+				// if no predecessors: incomingEdge will be bottom
+				map<string,ConstantInt*> empty;		
+				ConstantLattice * incomingEdge = new ConstantLattice(false,true,empty);
 				if (predecessorEdges.size() == 1)
 					incomingEdge = predecessorEdges.front();
                 else if (predecessorEdges.size() >= 2) {
@@ -121,7 +126,7 @@ namespace {
 					errs() << "Begin !!!LOOP!!! block with name: ";
 					errs().write_escaped(currentBlock->getName()) << "\n";
 					// check predecessors to perform merge
-					vector< map<string, int> > predecessorEdges;
+					vector< ConstantLattice * > predecessorEdges;
 					errs() << "\tPredecessors:\n";
 					for (pred_iterator PI = pred_begin(currentBlock); PI != pred_end(currentBlock); ++PI) {
 						BasicBlock *pred = *PI;
@@ -131,9 +136,14 @@ namespace {
 						// get final instruction's outgoing edge from each predecessor block
 						if (!blockInstAnalysis[pred->getName()].empty()) // some predecessors have not been visited (a loop edge from a future block)
 							predecessorEdges.push_back(blockInstAnalysis[pred->getName()].back()->getOutgoingEdge());
+						else {
+							errs() << "\t\t\tNo incoming edge from this, pushing bottom (full set)\n";
+							map<string,ConstantInt*> empty;
+							predecessorEdges.push_back(new ConstantLattice(false,true,empty)); //mem leak here
+						}
 					}
 					// perform mergings			
-					map<string, int> incomingEdge;
+					ConstantLattice * incomingEdge;
 					if (predecessorEdges.size() == 1)
 						incomingEdge = predecessorEdges.front();
 					else if (predecessorEdges.size() >= 2) {
@@ -149,7 +159,7 @@ namespace {
 					for (unsigned int j = 0; j < blockInstAnalysis[currentBlock->getName()].size(); j++) { 
 						errs() << "\t\t";
 						ConstantPropAnalysis * analysis = blockInstAnalysis[currentBlock->getName()][j];
-						map<string,int> originalOut = analysis->getOutgoingEdge();
+						ConstantLattice * originalOut = analysis->getOutgoingEdge();
 						analysis->setIncomingEdge(incomingEdge);
 						analysis->applyFlowFunction();
 						analysis->getInstruction()->dump();
