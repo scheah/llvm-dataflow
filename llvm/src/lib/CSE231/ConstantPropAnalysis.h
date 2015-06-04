@@ -1,24 +1,25 @@
+#include "ConstantLattice.h"
 #include "llvm/IR/Instructions.h"
+
 
 using namespace llvm;
 using namespace std;
 
 class ConstantPropAnalysis {
 public:
-	ConstantPropAnalysis(Instruction * inst, map<string, int> incoming);
+	ConstantPropAnalysis(Instruction * inst, ConstantLattice * incoming);
     Instruction * getInstruction();
-    map<string, int> getOutgoingEdge();
-    void setIncomingEdge(map<string,int> incoming);
+    ConstantLattice * getOutgoingEdge();
+    void setIncomingEdge(ConstantLattice * incoming);
     void applyFlowFunction();
     void dump();
     
-    static map<string,int> merge(map<string,int> edge1, map<string,int> edge2);
-    static bool equal(map<string,int> edge1, map<string,int> edge2);
+    static ConstantLattice * merge(ConstantLattice * edge_1, ConstantLattice * edge_2);
+    static bool equal(ConstantLattice * edge1, ConstantLattice * edge2);
 private:
 	Instruction * _instruction;
-	map<string, int> _incomingEdge;
-	map<string, int> _outgoingEdge;
-    void reset();
+	ConstantLattice * _incomingEdge;
+	ConstantLattice * _outgoingEdge;
     void handleStoreInst(StoreInst * storeInst);
 
 };
