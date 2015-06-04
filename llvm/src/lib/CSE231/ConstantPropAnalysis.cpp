@@ -152,12 +152,7 @@ void ConstantPropAnalysis::handleBinaryOp(Instruction * inst) {
     ConstantInt * operand1 = tryGetConstantValue(inst->getOperand(0));
     ConstantInt * operand2 = tryGetConstantValue(inst->getOperand(1));
 
-    errs() << "Operands:  "  << inst->getNumOperands() <<  "\n";
-    //inst->getOperand(0)->dump();
-    errs() << "Operands:  " <<  inst->getOperand(0)->getName().str() << "\n";
-    for (User::value_op_iterator I = inst->value_op_begin(); I != inst->value_op_end(); I++) {
-            //errs() << "Op:" << I->hasName() << "   " << I->getValueName()->getKey().str() << "\n";
-    }
+    errs() << "Operands:  " <<  inst->getOperand(0)->getName().str() << "\t" << inst->getOperand(1)->getName().str() << "\n";
 
     if (operand1 == NULL || operand2 == NULL) {
         errs() << "No constant in binary op or variable is not in incoming edge.\n";
