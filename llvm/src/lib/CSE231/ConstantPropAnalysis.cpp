@@ -15,7 +15,7 @@ void ConstantPropAnalysis::applyFlowFunction() {
         handleStoreInst((StoreInst *) _instruction);
     }
     else if (_instruction->isBinaryOp()) {
-            
+        handleBinaryOp(_instruction);            
     }
 	else {//temp 
 		*_outgoingEdge = *_incomingEdge;
@@ -151,6 +151,13 @@ ConstantInt * ConstantPropAnalysis::tryGetConstantValue(Value * value) {
 void ConstantPropAnalysis::handleBinaryOp(Instruction * inst) {
     ConstantInt * operand1 = tryGetConstantValue(inst->getOperand(0));
     ConstantInt * operand2 = tryGetConstantValue(inst->getOperand(1));
+
+    errs() << "Operands:  "  << inst->getNumOperands() <<  "\n";
+    //inst->getOperand(0)->dump();
+    errs() << "Operands:  " <<  inst->getOperand(0)->getName().str() << "\n";
+    for (User::value_op_iterator I = inst->value_op_begin(); I != inst->value_op_end(); I++) {
+            //errs() << "Op:" << I->hasName() << "   " << I->getValueName()->getKey().str() << "\n";
+    }
 
     if (operand1 == NULL || operand2 == NULL) {
         errs() << "No constant in binary op or variable is not in incoming edge.\n";
