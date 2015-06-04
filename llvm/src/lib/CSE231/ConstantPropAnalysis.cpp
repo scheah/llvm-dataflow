@@ -129,31 +129,30 @@ void ConstantPropAnalysis::handleStoreInst(StoreInst * storeInst) {
     }
 
     string name = storeInst->getPointerOperand()->getName().str();
-    _outgoingEdge[name] = value;
+    outgoingEdge[name] = CI;
+	_outgoingEdge->setNewFacts(false,false,outgoingEdge);
 }
 
-bool ConstantPropAnalysis::tryGetConstantValue(Value * value, int * constant) {
+ConstantInt * ConstantPropAnalysis::tryGetConstantValue(Value * value) {
     ConstantInt * CI = dyn_cast<ConstantInt>(value);
     if (CI && CI->getBitWidth() <= 32) {
-        *constant = CI->getSExtValue();
-        return true;
+        return CI;
     }
 
-    map<string,int>::iterator iterator = _incomingEdge.find(value->getName().str());
+    map<string,ConstantInt*>::iterator iterator = _incomingEdge->getFacts().find(value->getName().str());
 
-    if (iterator != _incomingEdge.end()) {
-        *constant = iterator->second;
-        return true;
+    if (iterator != _incomingEdge->getFacts().end()) {
+        return iterator->second;
     }
 
-    return false;
+    return NULL;
 }
 
 void ConstantPropAnalysis::handleBinaryOp(Instruction * inst) {
-    int operand1;
-    int operand2;
+    ConstantInt * operand1 = tryGetConstantValue(inst->getOperand(0));
+    ConstantInt * operand2 = tryGetConstantValue(inst->getOperand(1));
 
-    if (!tryGetConstantValue(inst->getOperand(0), &operand1) || !tryGetConstantValue(inst->getOperand(1), &operand2)) {
+    if (operand1 == NULL || operand2 == NULL) {
         errs() << "No constant in binary op or variable is not in incoming edge.\n";
         return;
     }
@@ -176,9 +175,5 @@ void ConstantPropAnalysis::handleBinaryOp(Instruction * inst) {
             //_outgoingEdge[variable] = operand1 / operand2;
             break;
     }
-=======
-    outgoingEdge[name] = CI;
-	_outgoingEdge->setNewFacts(false,false,outgoingEdge);
->>>>>>> origin/master
 }
 
