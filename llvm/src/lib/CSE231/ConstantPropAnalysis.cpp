@@ -172,6 +172,18 @@ void ConstantPropAnalysis::handleBinaryOp(Instruction * inst) {
         case Instruction::URem:
             result = operand1 % operand2;
             break;
+
+        case Instruction::Or:
+            result = operand1 | operand2;
+            break;
+
+        case Instruction::And:
+            result = operand1 & operand2;
+            break;
+
+        case Instruction::Xor:
+            result = operand1 ^ operand2;
+            break;
     }
 
     IntegerType * integerType = IntegerType::get(inst->getContext(), 32);
