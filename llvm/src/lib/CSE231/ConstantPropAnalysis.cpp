@@ -88,35 +88,11 @@ bool ConstantPropAnalysis::equal(ConstantLattice * edge_1, ConstantLattice * edg
 
 void ConstantPropAnalysis::dump() {
     errs() << "\t\t\tINCOMING:\n";
-	if (_incomingEdge->isTop())
-		errs() << "\t\t\tis Top\n";
-	else if (_incomingEdge->isBottom()) {
-		errs() << "\t\t\tis Bottom\n";
-	}
-	else {
-		for (map<string, ConstantInt *>::iterator i = _incomingEdge->getFacts().begin(); i != _incomingEdge->getFacts().end(); i++) {
-			//if (i->first != NULL) {
-				errs() << "\t\t\tKey " << i->first << "\n"; 
-				errs() << "\t\t\t\tVal ";
-				i->second->dump();
-			//}
-		}
-	}
+    _incomingEdge->dump();
+
     errs() << "\t\t\tOUTGOING:\n";
-	if (_outgoingEdge->isTop())
-		errs() << "\t\t\tis Top\n";
-	else if (_outgoingEdge->isBottom()) {
-		errs() << "\t\t\tis Bottom\n";
-	}
-	else {
-		for (map<string, ConstantInt *>::iterator i = _outgoingEdge->getFacts().begin(); i != _outgoingEdge->getFacts().end(); i++) {
-			//if (i->first != NULL) {
-				errs() << "\t\t\tKey " << i->first << "\n"; 
-				errs() << "\t\t\t\tVal ";
-				i->second->dump();
-			//}
-		}
-	}
+    _outgoingEdge->dump();
+    
     errs() << "\t\t--------------------------------------------------------\n";
 }
 
