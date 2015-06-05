@@ -11,8 +11,10 @@ ConstantPropAnalysis::ConstantPropAnalysis(Instruction * inst, ConstantLattice *
 
 void ConstantPropAnalysis::applyFlowFunction() {
     if (StoreInst::classof(_instruction)) {
-		*_outgoingEdge = *_incomingEdge;
         handleStoreInst((StoreInst *) _instruction);
+    }
+    else if (LoadInst::classof(_instruction)) {
+        handleLoadInst((LoadInst *) _instruction);
     }
     else if (_instruction->isBinaryOp()) {
         handleBinaryOp(_instruction);            
@@ -107,6 +109,13 @@ void ConstantPropAnalysis::handleStoreInst(StoreInst * storeInst) {
 	map<string, ConstantInt *> incomingEdge = _incomingEdge->getFacts(); 
     incomingEdge[name] = CI;
 	_outgoingEdge->setNewFacts(false,false,incomingEdge);
+}
+
+void ConstantPropAnalysis::handleLoadInst(LoadInst * loadInst) {
+    map<string, ConstantInt *> edgeMap = _incomingEdge->getFacts();
+
+    edgeMap[loadInst->getOperandUse(0).getUser()->getName().str()] = edgeMap[loadInst->getOperand(0)->getName().str()];
+    _outgoingEdge->setNewFacts(false,false,edgeMap);
 }
 
 ConstantInt * ConstantPropAnalysis::tryGetConstantValue(Value * value) {
