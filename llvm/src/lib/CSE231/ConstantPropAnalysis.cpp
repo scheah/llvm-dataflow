@@ -113,8 +113,9 @@ void ConstantPropAnalysis::handleStoreInst(StoreInst * storeInst) {
 
 void ConstantPropAnalysis::handleLoadInst(LoadInst * loadInst) {
     map<string, ConstantInt *> edgeMap = _incomingEdge->getFacts();
-
-    edgeMap[loadInst->getOperandUse(0).getUser()->getName().str()] = edgeMap[loadInst->getOperand(0)->getName().str()];
+	edgeMap.erase(loadInst->getOperandUse(0).getUser()->getName().str());
+	if (edgeMap.count(loadInst->getOperand(0)->getName().str()) > 0)
+    	edgeMap[loadInst->getOperandUse(0).getUser()->getName().str()] = edgeMap[loadInst->getOperand(0)->getName().str()];
     _outgoingEdge->setNewFacts(false,false,edgeMap);
 }
 
@@ -135,6 +136,9 @@ ConstantInt * ConstantPropAnalysis::tryGetConstantValue(Value * value) {
 }
 
 void ConstantPropAnalysis::handleBinaryOp(Instruction * inst) {
+	map<string,ConstantInt*> constantMap = _incomingEdge->getFacts();
+	string dest = inst->getOperandUse(0).getUser()->getName().str();
+	constantMap.erase(dest);
     ConstantInt * operandConstant1 = tryGetConstantValue(inst->getOperand(0));
     ConstantInt * operandConstant2 = tryGetConstantValue(inst->getOperand(1));
 
@@ -142,6 +146,7 @@ void ConstantPropAnalysis::handleBinaryOp(Instruction * inst) {
     "\tdest" << inst->getOperandUse(0).getUser()->getName().str() << "\n";
 
     if (operandConstant1 == NULL || operandConstant2 == NULL) {
+		_outgoingEdge->setNewFacts(false, false, constantMap);
         errs() << "No constant in binary op or variable is not in incoming edge.\n";
         return;
     }
@@ -188,9 +193,6 @@ void ConstantPropAnalysis::handleBinaryOp(Instruction * inst) {
 
     IntegerType * integerType = IntegerType::get(inst->getContext(), 32);
     ConstantInt * resultConstant = ConstantInt::getSigned(integerType, result);
-    map<string,ConstantInt*> constantMap = _incomingEdge->getFacts();
-    string dest = inst->getOperandUse(0).getUser()->getName().str();
-
     constantMap[dest] = resultConstant;
     _outgoingEdge->setNewFacts(false, false, constantMap);
 }
