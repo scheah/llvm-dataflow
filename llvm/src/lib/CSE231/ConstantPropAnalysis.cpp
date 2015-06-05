@@ -124,9 +124,10 @@ ConstantInt * ConstantPropAnalysis::tryGetConstantValue(Value * value) {
         return CI;
     }
 
-    map<string,ConstantInt*>::iterator iterator = _incomingEdge->getFacts().find(value->getName().str());
+    map<string,ConstantInt*> edgeMap = _incomingEdge->getFacts();
+    map<string,ConstantInt*>::iterator iterator = edgeMap.find(value->getName().str());
 
-    if (iterator != _incomingEdge->getFacts().end()) {
+    if (iterator != edgeMap.end()) {
         return iterator->second;
     }
 
