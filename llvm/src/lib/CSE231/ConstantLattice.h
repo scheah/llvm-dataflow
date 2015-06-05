@@ -23,6 +23,8 @@ public:
 	void setNewFacts(bool isTop, bool isBottom, map<string, ConstantInt *> facts);
 	bool isTop();
 	bool isBottom();
+    void dump();
+
 private:
 	map<string, ConstantInt*> _facts;
 	bool _isTop;

@@ -41,3 +41,19 @@ bool ConstantLattice::isTop() {
 bool ConstantLattice::isBottom() {
 	return _isBottom;
 }
+
+void ConstantLattice::dump() {
+    if (isTop()) {
+        errs() << "\t\t\tis Top\n";
+    }
+    else if (isBottom()) {
+        errs() << "\t\t\tis Bottom\n";
+    }
+    else {
+        for (map<string, ConstantInt *>::iterator i = _facts.begin(); i != _facts.end(); i++) {
+            errs() << "\t\t\tKey " << i->first << "\n";
+            errs() << "\t\t\tVal " << i->second->getSExtValue() << "\n";
+        }
+    }
+}
+
