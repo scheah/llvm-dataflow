@@ -22,6 +22,7 @@ private:
 	ConstantLattice * _incomingEdge;
 	ConstantLattice * _outgoingEdge;
     void handleStoreInst(StoreInst * storeInst);
+    void handleLoadInst(LoadInst * loadInst);
     void handleBinaryOp(Instruction * inst);
     ConstantInt * tryGetConstantValue(Value * value);
 };
