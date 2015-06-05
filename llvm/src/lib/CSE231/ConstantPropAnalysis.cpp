@@ -97,16 +97,16 @@ void ConstantPropAnalysis::dump() {
 }
 
 void ConstantPropAnalysis::handleStoreInst(StoreInst * storeInst) {
-	map<string, ConstantInt *> outgoingEdge = _outgoingEdge->getFacts(); 
-    ConstantInt* CI = dyn_cast<ConstantInt>(storeInst->getValueOperand());
-    if (!CI || CI->getBitWidth() > 32) {
+    ConstantInt* CI = tryGetConstantValue(storeInst->getValueOperand());
+    if (CI == NULL) {
 		errs() << "[ConstantPropAnalysis::handleStoreInst] ERROR\n";
         return;
     }
 
     string name = storeInst->getPointerOperand()->getName().str();
-    outgoingEdge[name] = CI;
-	_outgoingEdge->setNewFacts(false,false,outgoingEdge);
+	map<string, ConstantInt *> incomingEdge = _incomingEdge->getFacts(); 
+    incomingEdge[name] = CI;
+	_outgoingEdge->setNewFacts(false,false,incomingEdge);
 }
 
 ConstantInt * ConstantPropAnalysis::tryGetConstantValue(Value * value) {
@@ -125,33 +125,46 @@ ConstantInt * ConstantPropAnalysis::tryGetConstantValue(Value * value) {
 }
 
 void ConstantPropAnalysis::handleBinaryOp(Instruction * inst) {
-    ConstantInt * operand1 = tryGetConstantValue(inst->getOperand(0));
-    ConstantInt * operand2 = tryGetConstantValue(inst->getOperand(1));
+    ConstantInt * operandConstant1 = tryGetConstantValue(inst->getOperand(0));
+    ConstantInt * operandConstant2 = tryGetConstantValue(inst->getOperand(1));
 
-    errs() << "Operands:  " <<  inst->getOperand(0)->getName().str() << "\t" << inst->getOperand(1)->getName().str() << "\n";
+    errs() << "Operands:  " <<  inst->getOperand(0)->getName().str() << "\t" << inst->getOperand(1)->getName().str() <<
+    "\tdest" << inst->getOperandUse(0).getUser()->getName().str() << "\n";
 
-    if (operand1 == NULL || operand2 == NULL) {
+    if (operandConstant1 == NULL || operandConstant2 == NULL) {
         errs() << "No constant in binary op or variable is not in incoming edge.\n";
         return;
     }
 
+    int64_t operand1 = operandConstant1->getSExtValue();
+    int64_t operand2 = operandConstant2->getSExtValue();
+    int64_t result;
+
     switch (inst->getOpcode()) {
         case Instruction::Add:
-            //_outgoingEdge[variable] = operand1 + operand2;
+            result = operand1 + operand2;
             break;
 
         case Instruction::Mul:
-            //_outgoingEdge[variable] = operand1 * operand2;
+            result = operand1 * operand2;
             break;
 
         case Instruction::Sub:
-            //_outgoingEdge[variable] = operand1 - operand2;
+            result = operand1 - operand2;
             break;
 
         case Instruction::SDiv:
         case Instruction::UDiv:
-            //_outgoingEdge[variable] = operand1 / operand2;
+            result = operand1 / operand2;
             break;
     }
+
+    IntegerType * integerType = IntegerType::get(inst->getContext(), 32);
+    ConstantInt * resultConstant = ConstantInt::getSigned(integerType, result);
+    map<string,ConstantInt*> constantMap = _incomingEdge->getFacts();
+    string dest = inst->getOperandUse(0).getUser()->getName().str();
+
+    constantMap[dest] = resultConstant;
+    _outgoingEdge->setNewFacts(false, false, constantMap);
 }
 
