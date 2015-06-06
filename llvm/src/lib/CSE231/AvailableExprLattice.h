@@ -5,6 +5,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/raw_ostream.h"
+#include "BaseLattice.h"
 
 #include <map>
 #include <string>
@@ -12,7 +13,7 @@
 using namespace llvm;
 using namespace std;
 
-class AvailableExprLattice {
+class AvailableExprLattice : public BaseLattice {
 public:
 	AvailableExprLattice();
 	AvailableExprLattice(bool isTop, bool isBottom, map<string, ConstantInt *> facts);
@@ -26,9 +27,7 @@ public:
     void dump();
 
 private:
-	map<string, ConstantInt*> _facts;
-	bool _isTop;
-	bool _isBottom;
+    map<string, ConstantInt*> _facts;
 
 };
 
