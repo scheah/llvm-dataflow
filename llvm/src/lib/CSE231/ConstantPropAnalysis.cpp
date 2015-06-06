@@ -7,6 +7,21 @@ ConstantPropAnalysis::ConstantPropAnalysis(Instruction * inst, ConstantLattice *
 	_incomingEdge = new ConstantLattice(false,true,empty);
 	*_incomingEdge = *incoming;
 	_outgoingEdge = new ConstantLattice(false,true,empty);
+	_outgoingTrueEdge = new ConstantLattice(false,true,empty);
+	_outgoingFalseEdge = new ConstantLattice(false,true,empty);
+	if(BranchInst::classof(_instruction)) {
+		BranchInst * branchInst = (BranchInst *)_instruction;
+		if (branchInst->isConditional()) 
+			_isConditionalBranch = true;
+		else 
+			_isConditionalBranch = false;
+	}
+	else
+		_isConditionalBranch = false;
+}
+
+bool ConstantPropAnalysis::isConditionalBranch() {
+	return _isConditionalBranch;
 }
 
 void ConstantPropAnalysis::applyFlowFunction() {
@@ -19,7 +34,10 @@ void ConstantPropAnalysis::applyFlowFunction() {
     else if (_instruction->isBinaryOp()) {
         handleBinaryOp(_instruction);            
     }
-	else {//temp 
+	else if (_isConditionalBranch) {
+		handleConditionalBranchInst((BranchInst *) _instruction);
+	}
+	else { //temp 
 		*_outgoingEdge = *_incomingEdge;
 	}
 }
@@ -92,9 +110,16 @@ void ConstantPropAnalysis::dump() {
     errs() << "\t\t\tINCOMING:\n";
     _incomingEdge->dump();
 
-    errs() << "\t\t\tOUTGOING:\n";
-    _outgoingEdge->dump();
-    
+	if (!_isConditionalBranch) {
+		errs() << "\t\t\tOUTGOING:\n";
+		_outgoingEdge->dump();
+    }
+	else {
+		errs() << "\t\t\tOUTGOING (TRUE):\n";
+		_outgoingTrueEdge->dump();
+		errs() << "\t\t\tOUTGOING (FALSE):\n";
+		_outgoingFalseEdge->dump();
+	}
     errs() << "\t\t--------------------------------------------------------\n";
 }
 
@@ -195,5 +220,62 @@ void ConstantPropAnalysis::handleBinaryOp(Instruction * inst) {
     ConstantInt * resultConstant = ConstantInt::getSigned(integerType, result);
     constantMap[dest] = resultConstant;
     _outgoingEdge->setNewFacts(false, false, constantMap);
+}
+
+void ConstantPropAnalysis::handleConditionalBranchInst(BranchInst * inst) {
+	// Branch flow: 
+	// a == 0
+	// true will change, false will not
+	// a != 0
+	// false will change, true will not
+
+	*_outgoingEdge = *_incomingEdge;//temp may remove later
+	map<string,ConstantInt*> trueMap = _incomingEdge->getFacts();
+	map<string,ConstantInt*> falseMap = _incomingEdge->getFacts();
+
+	Value * condition = inst->getCondition();
+	if (!ICmpInst::classof(condition)) { // no information, just copy and exit
+		*_outgoingTrueEdge  = *_incomingEdge;
+		*_outgoingFalseEdge = *_incomingEdge;
+		return;
+	}
+	else {
+		ICmpInst * cmpInst = (ICmpInst *)condition; 
+		int predicate = cmpInst->isSigned() ? cmpInst->getSignedPredicate() : cmpInst->getUnsignedPredicate();
+		Value * lhs = cmpInst->getOperand(0);
+		Value * rhs = cmpInst->getOperand(1);
+		ConstantInt * rhsConstant = tryGetConstantValue(rhs);
+		ConstantInt * lhsConstant = tryGetConstantValue(lhs);
+		if ((lhsConstant && rhsConstant) || (!lhsConstant && !rhsConstant)) { //both constants, no information,just copy and exit
+			*_outgoingTrueEdge  = *_incomingEdge;
+			*_outgoingFalseEdge = *_incomingEdge;
+			return;
+		}
+		else if(rhsConstant)  { //rhs is a constant int, but lhs is not
+			if(predicate == CmpInst::ICMP_EQ) { // X == C
+				trueMap[lhs->getName().str()] = rhsConstant;
+			}
+			else if(predicate == CmpInst::ICMP_NE) { // X != C
+				falseMap[lhs->getName().str()] = rhsConstant;
+			}
+		}
+		else if(lhsConstant) {  //lhs is a constant int, but rhs is not
+			if(predicate == CmpInst::ICMP_EQ) { // C == X
+				trueMap[rhs->getName().str()] = lhsConstant;
+			}
+			else if(predicate == CmpInst::ICMP_NE) { // C != X
+				falseMap[rhs->getName().str()] = lhsConstant;
+			}
+		}
+		else {
+			errs() << "[ConstantPropAnalysis::handleConditionalBranchInst] WTF situation\n";
+		}
+		_outgoingTrueEdge->setNewFacts(false, false, trueMap);
+		_outgoingFalseEdge->setNewFacts(false, false, falseMap);
+	}
+
+	
+
+
 }
 
