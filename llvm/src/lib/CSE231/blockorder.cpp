@@ -55,7 +55,9 @@ namespace {
 					errs() << "\n";
 					// get final instruction's outgoing edge from each predecessor block
 					if (!blockInstAnalysis[pred->getName()].empty()) {// some predecessors have not been visited (a loop edge from a future block)
-						predecessorEdges.push_back(blockInstAnalysis[pred->getName()].back()->getOutgoingEdge());
+						ConstantLattice * predecessorOutgoingEdge = blockInstAnalysis[pred->getName()].back()->getOutgoingEdge( &(*B) );
+						predecessorEdges.push_back(predecessorOutgoingEdge);
+						predecessorOutgoingEdge->dump();
 					}
 					else {
 						errs() << "\t\t\tNo incoming edge from this, pushing bottom (full set)\n";
@@ -134,8 +136,11 @@ namespace {
 						errs().write_escaped(pred->getName());
 						errs() << "\n";
 						// get final instruction's outgoing edge from each predecessor block
-						if (!blockInstAnalysis[pred->getName()].empty()) // some predecessors have not been visited (a loop edge from a future block)
-							predecessorEdges.push_back(blockInstAnalysis[pred->getName()].back()->getOutgoingEdge());
+						if (!blockInstAnalysis[pred->getName()].empty()) {// some predecessors have not been visited (a loop edge from a future block)
+							ConstantLattice * predecessorOutgoingEdge = blockInstAnalysis[pred->getName()].back()->getOutgoingEdge( currentBlock );
+							predecessorEdges.push_back(predecessorOutgoingEdge);
+							predecessorOutgoingEdge->dump();
+						}
 						else {
 							errs() << "\t\t\tNo incoming edge from this, pushing bottom (full set)\n";
 							map<string,ConstantInt*> empty;

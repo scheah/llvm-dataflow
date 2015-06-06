@@ -50,6 +50,26 @@ ConstantLattice * ConstantPropAnalysis::getOutgoingEdge() {
     return _outgoingEdge;
 }
 
+ConstantLattice * ConstantPropAnalysis::getOutgoingEdge(BasicBlock * toSuccessor) {
+	if(!_isConditionalBranch) {
+		//errs() << "[ConstantPropAnalysis::getOutgoingEdge(BasicBlock * toSuccessor)] not a conditional branch predecessor, return normal outgoing edge\n";
+		return _outgoingEdge;
+	}
+	BranchInst * branchInst = (BranchInst * )_instruction;
+	BasicBlock * trueBlock = branchInst->getSuccessor(0);
+	BasicBlock * falseBlock = branchInst->getSuccessor(1);
+	if (toSuccessor == trueBlock) {
+		return _outgoingTrueEdge;
+	}
+	else if(toSuccessor == falseBlock) {
+		return _outgoingFalseEdge;
+	}
+	else {
+		errs() << "[ConstantPropAnalysis::getOutgoingEdge(BasicBlock * toSuccessor)] the world is weird.\n";
+	}
+	return NULL;
+}
+
 void ConstantPropAnalysis::setIncomingEdge(ConstantLattice * incoming) {    
     *_incomingEdge = *incoming;
 }
@@ -254,24 +274,30 @@ void ConstantPropAnalysis::handleConditionalBranchInst(BranchInst * inst) {
 		else if(rhsConstant)  { //rhs is a constant int, but lhs is not
 			if(predicate == CmpInst::ICMP_EQ) { // X == C
 				trueMap[lhs->getName().str()] = rhsConstant;
+				_outgoingTrueEdge->setNewFacts(false, false, trueMap);
+				*_outgoingFalseEdge = *_incomingEdge;
 			}
 			else if(predicate == CmpInst::ICMP_NE) { // X != C
 				falseMap[lhs->getName().str()] = rhsConstant;
+				_outgoingFalseEdge->setNewFacts(false, false, falseMap);
+				*_outgoingTrueEdge = *_incomingEdge;
 			}
 		}
 		else if(lhsConstant) {  //lhs is a constant int, but rhs is not
 			if(predicate == CmpInst::ICMP_EQ) { // C == X
 				trueMap[rhs->getName().str()] = lhsConstant;
+				_outgoingTrueEdge->setNewFacts(false, false, trueMap);
+				*_outgoingFalseEdge = *_incomingEdge;
 			}
 			else if(predicate == CmpInst::ICMP_NE) { // C != X
 				falseMap[rhs->getName().str()] = lhsConstant;
+				_outgoingFalseEdge->setNewFacts(false, false, falseMap);
+				*_outgoingTrueEdge = *_incomingEdge;
 			}
 		}
 		else {
 			errs() << "[ConstantPropAnalysis::handleConditionalBranchInst] WTF situation\n";
 		}
-		_outgoingTrueEdge->setNewFacts(false, false, trueMap);
-		_outgoingFalseEdge->setNewFacts(false, false, falseMap);
 	}
 
 	

@@ -11,6 +11,7 @@ public:
 	ConstantPropAnalysis(Instruction * inst, ConstantLattice * incoming);
     Instruction * getInstruction();
     ConstantLattice * getOutgoingEdge();
+	ConstantLattice * getOutgoingEdge(BasicBlock * toSuccessor);
     void setIncomingEdge(ConstantLattice * incoming);
 	bool isConditionalBranch();
     void applyFlowFunction();
