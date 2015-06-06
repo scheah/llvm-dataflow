@@ -144,16 +144,16 @@ void ConstantPropAnalysis::dump() {
 }
 
 void ConstantPropAnalysis::handleStoreInst(StoreInst * storeInst) {
+	string name = storeInst->getPointerOperand()->getName().str();
+	map<string, ConstantInt *> edgeMap = _incomingEdge->getFacts(); 
+	edgeMap.erase(name);
     ConstantInt* CI = tryGetConstantValue(storeInst->getValueOperand());
     if (CI == NULL) {
-		errs() << "[ConstantPropAnalysis::handleStoreInst] ERROR\n";
-        return;
+		errs() << "[ConstantPropAnalysis::handleStoreInst] not a ConstantInt\n";
     }
-
-    string name = storeInst->getPointerOperand()->getName().str();
-	map<string, ConstantInt *> incomingEdge = _incomingEdge->getFacts(); 
-    incomingEdge[name] = CI;
-	_outgoingEdge->setNewFacts(false,false,incomingEdge);
+	else
+		edgeMap[name] = CI;
+	_outgoingEdge->setNewFacts(false,false,edgeMap);
 }
 
 void ConstantPropAnalysis::handleLoadInst(LoadInst * loadInst) {
