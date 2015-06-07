@@ -49,20 +49,12 @@ AvailableExprLattice * AvailableExprAnalysis::merge(AvailableExprLattice * edge_
 	map<string,Expression*> edge2 = edge_2->getFacts().getMap();
 
     for (map<string,Expression*>::iterator i = edge1.begin(); i != edge1.end(); i++) {
-        //bool isEqualInBothEdges = false;
         for (map<string,Expression*>::iterator j = edge2.begin(); j != edge2.end(); j++) {
             // If item is in both edges and are equal, add to outgoing edge
-            /*
-            if (i->first->isEqual(j->first)) {
-                vector<string> v(i->second.size() + j->second.size());
-                vector<string>::iterator it;
-
-                it = set_union(i->second.begin(), i->second.end(), j->second.begin(), j->second.end(), v.begin());
-                v.resize(it-v.begin());
-                outgoingEdge[i->first] = v;
+            if (i->first == j->first && i->second->isEqualTo(j->second)) {
+                outgoingEdge.getMap()[i->first] = i->second;  
                 break;
             }
-            */
         }
     }
     
