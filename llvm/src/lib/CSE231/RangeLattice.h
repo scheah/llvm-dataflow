@@ -7,6 +7,7 @@
 #include "llvm/Support/raw_ostream.h"
 
 #include <map>
+#include <vector>
 #include <string>
 
 using namespace llvm;
@@ -15,18 +16,18 @@ using namespace std;
 class RangeLattice {
 public:
 	RangeLattice();
-	RangeLattice(bool isTop, bool isBottom, map<string, ConstantInt *> facts);
+	RangeLattice(bool isTop, bool isBottom, map<string, vector<int> > facts);
 	RangeLattice(RangeLattice& other);
 	RangeLattice& operator=(const RangeLattice& other);
 	~RangeLattice();
-	map<string, ConstantInt *> getFacts();
-	void setNewFacts(bool isTop, bool isBottom, map<string, ConstantInt *> facts);
+	map<string, vector<int> > getFacts();
+	void setNewFacts(bool isTop, bool isBottom, map<string, vector<int> > facts);
 	bool isTop();
 	bool isBottom();
     void dump();
 
 private:
-	map<string, ConstantInt*> _facts;
+	map<string, vector<int> > _facts;
 	bool _isTop;
 	bool _isBottom;
 

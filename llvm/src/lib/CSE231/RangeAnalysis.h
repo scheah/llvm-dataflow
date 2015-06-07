@@ -1,6 +1,7 @@
 #include "RangeLattice.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Value.h"
+#include <algorithm>    // std::max and min
 
 
 using namespace llvm;
@@ -17,7 +18,8 @@ public:
     void applyFlowFunction();
     void dump();
     
-    static RangeLattice * merge(RangeLattice * edge_1, RangeLattice * edge_2);
+	static RangeLattice * join(RangeLattice * edge_1, RangeLattice * edge_2);
+    static RangeLattice * merge(RangeLattice * edge_1, RangeLattice * edge_2);		
     static bool equal(RangeLattice * edge1, RangeLattice * edge2);
 private:
 	Instruction * _instruction;
@@ -30,5 +32,7 @@ private:
     void handleLoadInst(LoadInst * loadInst);
     void handleBinaryOp(Instruction * inst);
 	void handleConditionalBranchInst(BranchInst * inst);
+	ConstantInt * tryGetConstantValue(Value * value);
+	vector<int> tryGetRange(Value * value);
 };
 
