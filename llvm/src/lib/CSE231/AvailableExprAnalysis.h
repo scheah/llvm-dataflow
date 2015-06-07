@@ -21,8 +21,8 @@ private:
 	Instruction * _instruction;
 	AvailableExprLattice * _incomingEdge;
 	AvailableExprLattice * _outgoingEdge;
-    void handleStoreInst(StoreInst * storeInst);
-    void handleLoadInst(LoadInst * loadInst);
+    //void handleStoreInst(StoreInst * storeInst);
+    //void handleLoadInst(LoadInst * loadInst);
     void handleBinaryOp(Instruction * inst);
     ConstantInt * tryGetConstantValue(Value * value);
 };

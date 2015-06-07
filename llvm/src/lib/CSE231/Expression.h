@@ -6,17 +6,22 @@ using namespace std;
 
 class Expression {
 public:
-    static Expression * CreateExpression(Instruction * instruction);
-    virtual void dump() = 0;
-
-protected:
     Expression(Instruction * instruction);
+    Value * getOperand1();
+    Value * getOperand2();
+    string operand1Name();
+    string operand2Name();
+    bool isEqualTo(Expression * expression);
+
+    void dump();
+
+private:
     string getNameOf(Value * value);
 
     Instruction * _instruction;
 };
 
-
+/*
 class UnaryExpression : public Expression {
 public:
     UnaryExpression(Instruction * instruction);
@@ -31,7 +36,11 @@ public:
 
     Value * getOperand1();
     Value * getOperand2();
+    string operand1Name();
+    string operand2Name();
+    bool isEqualTo(BinaryExpression * expression);
+
     void dump();
 };
-
+*/
 

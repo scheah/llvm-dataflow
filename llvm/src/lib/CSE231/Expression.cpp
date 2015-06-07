@@ -14,15 +14,6 @@ string NumberToString ( T Number ) {
     return ss.str();
 }
 
-Expression * Expression::CreateExpression(Instruction * instruction) {
-    if (instruction->isBinaryOp()) {
-        return new BinaryExpression(instruction);
-    }
-    else {
-        return new UnaryExpression(instruction);
-    }
-}
-
 string Expression::getNameOf(Value * value) {
     ConstantInt * CI = dyn_cast<ConstantInt>(value);
     if (CI && CI->getBitWidth() <= 32) {
@@ -36,27 +27,36 @@ Expression::Expression(Instruction * instruction) {
     _instruction = instruction;
 }
 
-UnaryExpression::UnaryExpression(Instruction * instruction) : Expression(instruction) { }
+void Expression::dump() {
+    errs() << operand1Name() << " " << _instruction->getOpcodeName() << " " << operand2Name();
+}
 
-Value * UnaryExpression::getOperand() {
+Value * Expression::getOperand1() {
     return _instruction->getOperand(0);
 }
 
-void UnaryExpression::dump() { 
-    errs() << getNameOf(getOperand());
-}
-
-BinaryExpression::BinaryExpression(Instruction * instruction) : Expression(instruction) { }
-
-void BinaryExpression::dump() {
-    errs() << getNameOf(getOperand1()) << " " << _instruction->getOpcodeName() << " " << getNameOf(getOperand2());
-}
-
-Value * BinaryExpression::getOperand1() {
-    return _instruction->getOperand(0);
-}
-
-Value * BinaryExpression::getOperand2() {
+Value * Expression::getOperand2() {
     return _instruction->getOperand(1);
+}
+
+string Expression::operand1Name() {
+    return getNameOf(getOperand1());
+}
+
+string Expression::operand2Name() {
+    return getNameOf(getOperand2());
+}
+
+bool Expression::isEqualTo(Expression * expression) {
+    if (_instruction->isCommutative() && 
+       ((operand1Name() == expression->operand1Name() && operand2Name() == expression->operand2Name()) ||
+       (operand1Name() == expression->operand2Name() && operand2Name() == expression->operand1Name()))) {
+        return true;
+    }
+    else if (!_instruction->isCommutative() && operand1Name() == expression->operand1Name() && operand2Name() == expression->operand2Name()) {
+        return true;
+    }
+
+    return false;
 }
 

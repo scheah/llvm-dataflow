@@ -3,20 +3,20 @@
 
 AvailableExprAnalysis::AvailableExprAnalysis(Instruction * inst, AvailableExprLattice * incoming) {
 	_instruction = inst;
-	map<string,Expression*> empty;
+	map<Expression*,vector<string>,expressionComp> empty;
 	_incomingEdge = new AvailableExprLattice(false,true,empty);
 	*_incomingEdge = *incoming;
 	_outgoingEdge = new AvailableExprLattice(false,true,empty);
 }
 
 void AvailableExprAnalysis::applyFlowFunction() {
-    if (StoreInst::classof(_instruction)) {
-        handleStoreInst((StoreInst *) _instruction);
-    }
-    else if (LoadInst::classof(_instruction)) {
-        handleLoadInst((LoadInst *) _instruction);
-    }
-    else if (_instruction->isBinaryOp()) {
+    //if (StoreInst::classof(_instruction)) {
+        //handleStoreInst((StoreInst *) _instruction);
+    //}
+    //else if (LoadInst::classof(_instruction)) {
+        //handleLoadInst((LoadInst *) _instruction);
+    //}
+    if (_instruction->isBinaryOp()) {
         handleBinaryOp(_instruction);            
     }
 	else {//temp 
@@ -100,10 +100,11 @@ void AvailableExprAnalysis::dump() {
     errs() << "\t\t--------------------------------------------------------\n";
 }
 
+/*
 void AvailableExprAnalysis::handleStoreInst(StoreInst * storeInst) {
     string name = storeInst->getPointerOperand()->getName().str();
 
-    map<string, Expression *> incomingEdge = _incomingEdge->getFacts();
+    map<Expression *,vector<string>, expressionComp> incomingEdge = _incomingEdge->getFacts();
     incomingEdge[name] = new UnaryExpression(storeInst);
     _outgoingEdge->setNewFacts(false, false, incomingEdge);
 }
@@ -118,12 +119,11 @@ void AvailableExprAnalysis::handleLoadInst(LoadInst * loadInst) {
 
     _outgoingEdge->setNewFacts(false,false,edgeMap);
 }
+*/
 
 void AvailableExprAnalysis::handleBinaryOp(Instruction * inst) {
-    map<string, Expression *> edgeMap = _incomingEdge->getFacts();
-
-    errs() << "\nGOT HERE\n";
-    edgeMap[inst->getOperandUse(0).getUser()->getName().str()] = new BinaryExpression(inst);
+    map<Expression *, vector<string>, expressionComp> edgeMap = _incomingEdge->getFacts();
+    edgeMap[new Expression(inst)].push_back(inst->getOperandUse(0).getUser()->getName().str());
 
     _outgoingEdge->setNewFacts(false,false,edgeMap);
 }
