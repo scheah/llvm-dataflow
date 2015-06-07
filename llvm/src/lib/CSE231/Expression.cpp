@@ -27,26 +27,30 @@ Expression::Expression(Instruction * instruction) {
     _instruction = instruction;
 }
 
-void Expression::dump() {
+BinaryExpression::BinaryExpression(Instruction * instruction) : Expression(instruction) {
+}
+
+void BinaryExpression::dump() {
     errs() << operand1Name() << " " << _instruction->getOpcodeName() << " " << operand2Name();
 }
 
-Value * Expression::getOperand1() {
+Value * BinaryExpression::getOperand1() {
     return _instruction->getOperand(0);
 }
 
-Value * Expression::getOperand2() {
+Value * BinaryExpression::getOperand2() {
     return _instruction->getOperand(1);
 }
 
-string Expression::operand1Name() {
+string BinaryExpression::operand1Name() {
     return getNameOf(getOperand1());
 }
 
-string Expression::operand2Name() {
+string BinaryExpression::operand2Name() {
     return getNameOf(getOperand2());
 }
 
+/*
 bool Expression::isEqualTo(Expression * expression) {
     if (_instruction->isCommutative() && _instruction->getOpcode() == expression->_instruction->getOpcode()) {
         if ((operand1Name() == expression->operand1Name() &&
@@ -61,4 +65,4 @@ bool Expression::isEqualTo(Expression * expression) {
 
     return operand1Name() > expression->operand1Name();
 }
-
+*/

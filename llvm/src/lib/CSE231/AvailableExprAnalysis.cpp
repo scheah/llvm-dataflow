@@ -3,7 +3,7 @@
 
 AvailableExprAnalysis::AvailableExprAnalysis(Instruction * inst, AvailableExprLattice * incoming) {
 	_instruction = inst;
-	map<Expression*,vector<string>,expressionComp> empty;
+	map<string,Expression*> empty;
 	_incomingEdge = new AvailableExprLattice(false,true,empty);
 	*_incomingEdge = *incoming;
 	_outgoingEdge = new AvailableExprLattice(false,true,empty);
@@ -122,8 +122,8 @@ void AvailableExprAnalysis::handleLoadInst(LoadInst * loadInst) {
 */
 
 void AvailableExprAnalysis::handleBinaryOp(Instruction * inst) {
-    map<Expression *, vector<string>, expressionComp> edgeMap = _incomingEdge->getFacts();
-    edgeMap[new Expression(inst)].push_back(inst->getOperandUse(0).getUser()->getName().str());
+    map<string, Expression*> edgeMap = _incomingEdge->getFacts();
+    edgeMap[inst->getOperandUse(0).getUser()->getName().str()] = new BinaryExpression(inst);
 
     _outgoingEdge->setNewFacts(false,false,edgeMap);
 }

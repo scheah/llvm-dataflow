@@ -14,27 +14,29 @@
 using namespace llvm;
 using namespace std;
 
+/*
 struct expressionComp : public binary_function<Expression*,Expression*,bool> {
     bool operator()(Expression * const a, Expression * const b) {
         return a->isEqualTo(b);
     }
 };
+*/
 
 class AvailableExprLattice : public BaseLattice {
 public:
 	AvailableExprLattice();
-	AvailableExprLattice(bool isTop, bool isBottom, map<Expression *,vector<string>,expressionComp> facts);
+	AvailableExprLattice(bool isTop, bool isBottom, map<string,Expression*> facts);
 	AvailableExprLattice(AvailableExprLattice& other);
 	AvailableExprLattice& operator=(const AvailableExprLattice& other);
 	~AvailableExprLattice();
-	map<Expression *,vector<string>,expressionComp> getFacts();
-	void setNewFacts(bool isTop, bool isBottom, map<Expression *,vector<string>,expressionComp> facts);
+	map<string,Expression*> getFacts();
+	void setNewFacts(bool isTop, bool isBottom, map<string,Expression*> facts);
 	bool isTop();
 	bool isBottom();
     void dump();
 
 private:
-    map<Expression *,vector<string>,expressionComp> _facts;
+    map<string,Expression*> _facts;
 
 };
 
