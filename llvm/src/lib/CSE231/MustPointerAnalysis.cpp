@@ -31,12 +31,6 @@ void MustPointerAnalysis::applyFlowFunction() {
     else if (LoadInst::classof(_instruction)) {
         handleLoadInst((LoadInst *) _instruction);
     }
-    //else if (_instruction->isBinaryOp()) {
-        //handleBinaryOp(_instruction);            
-    //}
-	//else if (_isConditionalBranch) {
-		//handleConditionalBranchInst((BranchInst *) _instruction);
-	//}
 	else { //temp 
 		*_outgoingEdge = *_incomingEdge;
 	}
@@ -89,23 +83,20 @@ MustPointerLattice * MustPointerAnalysis::merge(MustPointerLattice * edge_1, Mus
 	else if (edge_2->isBottom()) {
 		return new MustPointerLattice(false, false, edge_1->getFacts());
 	}
+
 	map<string, Value *> edge1 = edge_1->getFacts();
 	map<string, Value *> edge2 = edge_2->getFacts();
 	
     for (map<string, Value *>::iterator i = edge1.begin(); i != edge1.end(); i++) {
-        bool isEqualInBothEdges = false;
         for (map<string, Value *>::iterator j = edge2.begin(); j != edge2.end(); j++) {
             // If item is in both edges and are equal, add to outgoing edge
             if ( (i->first == j->first) && (i->second == j->second) ) {
-                //edge2.erase(i->first);
-                isEqualInBothEdges = true;
+                outgoingEdge[i->first] = i->second;
                 break;
             }
         }
-        if (isEqualInBothEdges) {
-            outgoingEdge[i->first] = i->second;
-        }
     }
+
     return new MustPointerLattice(false, false, outgoingEdge);
 }
 
@@ -151,12 +142,7 @@ void MustPointerAnalysis::handleStoreInst(StoreInst * storeInst) {
     const Type* type = storeInst->getPointerOperand()->getType();
 
     if (type->isPointerTy() && type->getContainedType(0)->isPointerTy()) {
-        errs() << "POINTERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR\n";
         edgeMap[name] = storeInst->getValueOperand();
-
-        if (type->getContainedType(0)->isPointerTy()) {
-            errs() << "MORE POINTERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR\n";
-        }
     }
 
     _outgoingEdge->setNewFacts(false,false,edgeMap);
@@ -168,69 +154,9 @@ void MustPointerAnalysis::handleLoadInst(LoadInst * loadInst) {
 	
     const Type* type = loadInst->getOperand(0)->getType();
     if (type->isPointerTy() && type->getContainedType(0)->isPointerTy()) {
-        errs() << "LOADDDDDDDDDDDDDDDDDDDDD POINTERRRRRRRRRRRRRRRRRRRRRR\n";
         edgeMap[loadInst->getOperandUse(0).getUser()->getName().str()] = loadInst->getOperand(0);
     }
     
     _outgoingEdge->setNewFacts(false,false,edgeMap);
-}
-
-void MustPointerAnalysis::handleConditionalBranchInst(BranchInst * inst) {
-	// Branch flow: 
-	// a == 0
-	// true will change, false will not
-	// a != 0
-	// false will change, true will not
-
-	*_outgoingEdge = *_incomingEdge;//temp may remove later
-	map<string,Value*> trueMap = _incomingEdge->getFacts();
-	map<string,Value*> falseMap = _incomingEdge->getFacts();
-
-	Value * condition = inst->getCondition();
-	if (!ICmpInst::classof(condition)) { // no information, just copy and exit
-		*_outgoingTrueEdge  = *_incomingEdge;
-		*_outgoingFalseEdge = *_incomingEdge;
-		return;
-	}
-	else {
-		ICmpInst * cmpInst = (ICmpInst *)condition; 
-		int predicate = cmpInst->isSigned() ? cmpInst->getSignedPredicate() : cmpInst->getUnsignedPredicate();
-		Value * lhs = cmpInst->getOperand(0);
-		Value * rhs = cmpInst->getOperand(1);
-		Value * rhsConstant = tryGetConstantValue(rhs);
-		Value * lhsConstant = tryGetConstantValue(lhs);
-		if ((lhsConstant && rhsConstant) || (!lhsConstant && !rhsConstant)) { //both constants, no information,just copy and exit
-			*_outgoingTrueEdge  = *_incomingEdge;
-			*_outgoingFalseEdge = *_incomingEdge;
-			return;
-		}
-		else if(rhsConstant)  { //rhs is a constant int, but lhs is not
-			if(predicate == CmpInst::ICMP_EQ) { // X == C
-				trueMap[lhs->getName().str()] = rhsConstant;
-				_outgoingTrueEdge->setNewFacts(false, false, trueMap);
-				*_outgoingFalseEdge = *_incomingEdge;
-			}
-			else if(predicate == CmpInst::ICMP_NE) { // X != C
-				falseMap[lhs->getName().str()] = rhsConstant;
-				_outgoingFalseEdge->setNewFacts(false, false, falseMap);
-				*_outgoingTrueEdge = *_incomingEdge;
-			}
-		}
-		else if(lhsConstant) {  //lhs is a constant int, but rhs is not
-			if(predicate == CmpInst::ICMP_EQ) { // C == X
-				trueMap[rhs->getName().str()] = lhsConstant;
-				_outgoingTrueEdge->setNewFacts(false, false, trueMap);
-				*_outgoingFalseEdge = *_incomingEdge;
-			}
-			else if(predicate == CmpInst::ICMP_NE) { // C != X
-				falseMap[rhs->getName().str()] = lhsConstant;
-				_outgoingFalseEdge->setNewFacts(false, false, falseMap);
-				*_outgoingTrueEdge = *_incomingEdge;
-			}
-		}
-		else {
-			errs() << "[MustPointerAnalysis::handleConditionalBranchInst] WTF situation\n";
-		}
-	}
 }
 

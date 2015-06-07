@@ -29,8 +29,5 @@ private:
 	bool _isConditionalBranch;
     void handleStoreInst(StoreInst * storeInst);
     void handleLoadInst(LoadInst * loadInst);
-    void handleBinaryOp(Instruction * inst);
-	void handleConditionalBranchInst(BranchInst * inst);
-    Value* tryGetConstantValue(Value * value);
 };
 
