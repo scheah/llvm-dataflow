@@ -85,6 +85,12 @@ RangeLattice * RangeAnalysis::join(RangeLattice * edge_1, RangeLattice * edge_2)
 	else if (edge_1->isBottom() && edge_2->isBottom()) { // both are bottom (empty) return bottom
 		return new RangeLattice(false, true, outgoingEdge);
 	}
+	else if (edge_1->isBottom()) {
+		return edge_2;
+	}
+	else if (edge_2->isBottom()) {
+		return edge_1;
+	}
 	map<string, vector<int> > edge1 = edge_1->getFacts();
 	map<string, vector<int> > edge2 = edge_2->getFacts();
 	
@@ -98,8 +104,12 @@ RangeLattice * RangeAnalysis::join(RangeLattice * edge_1, RangeLattice * edge_2)
             }
         }
         if (isInBothEdges) {
-            outgoingEdge[i->first].push_back( max(edge1[i->first][0], edge2[i->first][0]) );
-			outgoingEdge[i->first].push_back( min(edge1[i->first][1], edge2[i->first][1]) );
+			int varmin = max(edge1[i->first][0], edge2[i->first][0]);
+			int varmax = min(edge1[i->first][1], edge2[i->first][1]);
+			if (varmin <= varmax) { // there is an intersection of values
+            	outgoingEdge[i->first].push_back( varmax );
+				outgoingEdge[i->first].push_back( varmin );
+			}
 			edge2.erase(i->first); //erase...in order to get remainders later
         }
     }
@@ -195,6 +205,225 @@ void RangeAnalysis::handleLoadInst(LoadInst * loadInst) { //of the form X = Y
 
 
 void RangeAnalysis::handleBinaryOp(Instruction * inst) {
+	map<string, vector<int> > rangeMap = _incomingEdge->getFacts();
+	string dest = inst->getOperandUse(0).getUser()->getName().str();
+	rangeMap.erase(dest);
+	ConstantInt * operandConstant1 = tryGetConstantValue(inst->getOperand(0));
+	ConstantInt * operandConstant2 = tryGetConstantValue(inst->getOperand(1));
+    vector<int> operandRange1 = tryGetRange(inst->getOperand(0));
+    vector<int> operandRange2 = tryGetRange(inst->getOperand(1));
+	vector<int> resultRange;
+
+    errs() << "Operands:  " <<  inst->getOperand(0)->getName().str() << "\t" << inst->getOperand(1)->getName().str() <<
+    "\tdest" << inst->getOperandUse(0).getUser()->getName().str() << "\n";
+
+    if ( (operandConstant1 == NULL && operandRange1.empty()) || (operandConstant2 == NULL && operandRange2.empty()) ) {
+		_outgoingEdge->setNewFacts(false, false, rangeMap);
+        errs() << "No Constant or in binary op or range is not in incoming edge.\n";
+        return;
+    }
+	// Constant constant
+	// range range
+	// range constant
+	if (operandConstant1 && operandConstant2) {
+		int64_t operand1 = operandConstant1->getSExtValue();
+		int64_t operand2 = operandConstant2->getSExtValue();
+		int64_t result;
+
+		switch (inst->getOpcode()) {
+		    case Instruction::Add:
+		        result = operand1 + operand2;
+		        break;
+
+		    case Instruction::Mul:
+		        result = operand1 * operand2;
+		        break;
+
+		    case Instruction::Sub:
+		        result = operand1 - operand2;
+		        break;
+
+		    case Instruction::SDiv:
+		    case Instruction::UDiv:
+		        result = operand1 / operand2;
+		        break;
+
+		    case Instruction::SRem:
+		    case Instruction::URem:
+		        result = operand1 % operand2;
+		        break;
+
+		    case Instruction::Or:
+		        result = operand1 | operand2;
+		        break;
+
+		    case Instruction::And:
+		        result = operand1 & operand2;
+		        break;
+
+		    case Instruction::Xor:
+		        result = operand1 ^ operand2;
+		        break;
+		}
+		resultRange.push_back(result); //min
+		resultRange.push_back(result); //max
+	}
+	else if(!operandRange1.empty() && !operandRange2.empty()) {
+		int resultMin;
+		int resultMax;
+		int result; // a temp to check for min versus max changes
+		switch (inst->getOpcode()) {
+		    case Instruction::Add:
+		        resultMin = operandRange1[0] + operandRange2[0];
+				resultMax = operandRange1[1] + operandRange2[1];
+		        break;
+
+		    case Instruction::Mul:
+		       	resultMin = operandRange1[0] + operandRange2[0];
+				resultMax = operandRange1[1] + operandRange2[1];
+				if (resultMin > resultMax) { //swap if needed
+					result = resultMin;
+					resultMin = resultMax;
+					resultMax = result;
+				}
+		        break;
+
+		    case Instruction::Sub:
+		        resultMin = operandRange1[0] - operandRange2[0];
+				resultMax = operandRange1[1] - operandRange2[1];
+		        break;
+
+		    case Instruction::SDiv:
+		    case Instruction::UDiv:
+		        resultMin = operandRange1[0] / operandRange2[0];
+				resultMax = operandRange1[1] / operandRange2[1];
+				if (resultMin > resultMax) { //swap if needed
+					result = resultMin;
+					resultMin = resultMax;
+					resultMax = result;
+				}
+		        break;
+
+		    case Instruction::SRem:
+		    case Instruction::URem:
+		        resultMin = operandRange1[0] % operandRange2[0];
+				resultMax = operandRange1[1] % operandRange2[1];
+				if (resultMin > resultMax) { //swap if needed
+					result = resultMin;
+					resultMin = resultMax;
+					resultMax = result;
+				}
+		        break;
+		}
+		resultRange.push_back(result); //min
+		resultRange.push_back(result); //max
+	}
+	else if(!operandRange1.empty()) { // (min, max) op C
+		int resultMin;
+		int resultMax;
+		int result; // a temp to check for min versus max changes
+		int64_t operand2 = operandConstant2->getSExtValue();
+		switch (inst->getOpcode()) {
+		    case Instruction::Add:
+		        resultMin = operandRange1[0] + operand2;
+				resultMax = operandRange1[1] + operand2;
+		        break;
+
+		    case Instruction::Mul:
+		       	resultMin = operandRange1[0] + operand2;
+				resultMax = operandRange1[1] + operand2;
+				if (resultMin > resultMax) { //swap if needed
+					result = resultMin;
+					resultMin = resultMax;
+					resultMax = result;
+				}
+		        break;
+
+		    case Instruction::Sub:
+		        resultMin = operandRange1[0] - operand2;
+				resultMax = operandRange1[1] - operand2;
+		        break;
+
+		    case Instruction::SDiv:
+		    case Instruction::UDiv:
+		        resultMin = operandRange1[0] / operand2;
+				resultMax = operandRange1[1] / operand2;
+				if (resultMin > resultMax) { //swap if needed
+					result = resultMin;
+					resultMin = resultMax;
+					resultMax = result;
+				}
+		        break;
+
+		    case Instruction::SRem:
+		    case Instruction::URem:
+		        resultMin = operandRange1[0] % operand2;
+				resultMax = operandRange1[1] % operand2;
+				if (resultMin > resultMax) { //swap if needed
+					result = resultMin;
+					resultMin = resultMax;
+					resultMax = result;
+				}
+		        break;
+		}
+		resultRange.push_back(resultMin); //min
+		resultRange.push_back(resultMax); //max
+	}
+	else if(!operandRange2.empty()) { // C op (min, max)
+		int resultMin;
+		int resultMax;
+		int result; // a temp to check for min versus max changes
+		int64_t operand1 = operandConstant1->getSExtValue();
+		switch (inst->getOpcode()) {
+		    case Instruction::Add:
+		        resultMin = operand1 + operandRange2[0];
+				resultMax = operand1 + operandRange2[1];
+		        break;
+
+		    case Instruction::Mul:
+		       	resultMin = operand1 + operandRange2[0];
+				resultMax = operand1 + operandRange2[1];
+				if (resultMin > resultMax) { //swap if needed
+					result = resultMin;
+					resultMin = resultMax;
+					resultMax = result;
+				}
+		        break;
+
+		    case Instruction::Sub:
+		        resultMin = operand1 - operandRange2[0];
+				resultMax = operand1 - operandRange2[1];
+		        break;
+
+		    case Instruction::SDiv:
+		    case Instruction::UDiv:
+		        resultMin = operand1 / operandRange2[0];
+				resultMax = operand1 / operandRange2[1];
+				if (resultMin > resultMax) { //swap if needed
+					result = resultMin;
+					resultMin = resultMax;
+					resultMax = result;
+				}
+		        break;
+
+		    case Instruction::SRem:
+		    case Instruction::URem:
+		        resultMin = operand1 % operandRange2[0];
+				resultMax = operand1 % operandRange2[1];
+				if (resultMin > resultMax) { //swap if needed
+					result = resultMin;
+					resultMin = resultMax;
+					resultMax = result;
+				}
+		        break;
+		}
+		resultRange.push_back(result); //min
+		resultRange.push_back(result); //max
+	}
+    
+    rangeMap[dest] = resultRange;
+    _outgoingEdge->setNewFacts(false, false, rangeMap);
+
 }
 
 void RangeAnalysis::handleConditionalBranchInst(BranchInst * inst) {
