@@ -3,7 +3,7 @@
 
 MustPointerAnalysis::MustPointerAnalysis(Instruction * inst, MustPointerLattice * incoming) {
 	_instruction = inst;
-	map<string,ConstantInt*> empty;
+	map<string,Value*> empty;
 	_incomingEdge = new MustPointerLattice(false,true,empty);
 	*_incomingEdge = *incoming;
 	_outgoingEdge = new MustPointerLattice(false,true,empty);
@@ -26,16 +26,16 @@ bool MustPointerAnalysis::isConditionalBranch() {
 
 void MustPointerAnalysis::applyFlowFunction() {
     if (StoreInst::classof(_instruction)) {
-        handleStoreInst((StoreInst *) _instruction);
+        //handleStoreInst((StoreInst *) _instruction);
     }
     else if (LoadInst::classof(_instruction)) {
-        handleLoadInst((LoadInst *) _instruction);
+        //handleLoadInst((LoadInst *) _instruction);
     }
     else if (_instruction->isBinaryOp()) {
-        handleBinaryOp(_instruction);            
+        //handleBinaryOp(_instruction);            
     }
 	else if (_isConditionalBranch) {
-		handleConditionalBranchInst((BranchInst *) _instruction);
+		//handleConditionalBranchInst((BranchInst *) _instruction);
 	}
 	else { //temp 
 		*_outgoingEdge = *_incomingEdge;
@@ -76,7 +76,7 @@ void MustPointerAnalysis::setIncomingEdge(MustPointerLattice * incoming) {
 
 // will be a join
 MustPointerLattice * MustPointerAnalysis::merge(MustPointerLattice * edge_1, MustPointerLattice * edge_2) {
-	map<string,ConstantInt*> outgoingEdge;
+	map<string,Value*> outgoingEdge;
 	if (edge_1->isTop() || edge_2->isTop()) {
 		return new MustPointerLattice(true, false, outgoingEdge); // return Top
 	}
@@ -89,12 +89,12 @@ MustPointerLattice * MustPointerAnalysis::merge(MustPointerLattice * edge_1, Mus
 	else if (edge_2->isBottom()) {
 		return new MustPointerLattice(false, false, edge_1->getFacts());
 	}
-	map<string, ConstantInt *> edge1 = edge_1->getFacts();
-	map<string, ConstantInt *> edge2 = edge_2->getFacts();
+	map<string, Value *> edge1 = edge_1->getFacts();
+	map<string, Value *> edge2 = edge_2->getFacts();
 	
-    for (map<string, ConstantInt *>::iterator i = edge1.begin(); i != edge1.end(); i++) {
+    for (map<string, Value *>::iterator i = edge1.begin(); i != edge1.end(); i++) {
         bool isEqualInBothEdges = false;
-        for (map<string, ConstantInt *>::iterator j = edge2.begin(); j != edge2.end(); j++) {
+        for (map<string, Value *>::iterator j = edge2.begin(); j != edge2.end(); j++) {
             // If item is in both edges and are equal, add to outgoing edge
             if ( (i->first == j->first) && (i->second == j->second) ) {
                 //edge2.erase(i->first);
@@ -114,11 +114,11 @@ bool MustPointerAnalysis::equal(MustPointerLattice * edge_1, MustPointerLattice 
 		return true;
 	else if(edge_1->isBottom() && edge_2->isBottom())
 		return true;
-	map<string, ConstantInt *> edge1 = edge_1->getFacts();
-	map<string, ConstantInt *> edge2 = edge_2->getFacts();
+	map<string, Value *> edge1 = edge_1->getFacts();
+	map<string, Value *> edge2 = edge_2->getFacts();
     if(edge1.size() != edge2.size())
         return false;
-    for (map<string, ConstantInt *>::iterator i = edge1.begin(); i != edge1.end(); i++) {
+    for (map<string, Value *>::iterator i = edge1.begin(); i != edge1.end(); i++) {
         if (edge1[i->first] != edge2[i->first])
             return false;
     }
@@ -145,11 +145,11 @@ void MustPointerAnalysis::dump() {
 
 void MustPointerAnalysis::handleStoreInst(StoreInst * storeInst) {
 	string name = storeInst->getPointerOperand()->getName().str();
-	map<string, ConstantInt *> edgeMap = _incomingEdge->getFacts(); 
+	map<string, Value *> edgeMap = _incomingEdge->getFacts(); 
 	edgeMap.erase(name);
-    ConstantInt* CI = tryGetConstantValue(storeInst->getValueOperand());
+    Value* CI = tryGetConstantValue(storeInst->getValueOperand());
     if (CI == NULL) {
-		errs() << "[MustPointerAnalysis::handleStoreInst] not a ConstantInt\n";
+		errs() << "[MustPointerAnalysis::handleStoreInst] not a Value\n";
     }
 	else
 		edgeMap[name] = CI;
@@ -157,35 +157,35 @@ void MustPointerAnalysis::handleStoreInst(StoreInst * storeInst) {
 }
 
 void MustPointerAnalysis::handleLoadInst(LoadInst * loadInst) {
-    map<string, ConstantInt *> edgeMap = _incomingEdge->getFacts();
+    map<string, Value *> edgeMap = _incomingEdge->getFacts();
 	edgeMap.erase(loadInst->getOperandUse(0).getUser()->getName().str());
 	if (edgeMap.count(loadInst->getOperand(0)->getName().str()) > 0)
     	edgeMap[loadInst->getOperandUse(0).getUser()->getName().str()] = edgeMap[loadInst->getOperand(0)->getName().str()];
     _outgoingEdge->setNewFacts(false,false,edgeMap);
 }
 
-ConstantInt * MustPointerAnalysis::tryGetConstantValue(Value * value) {
-    ConstantInt * CI = dyn_cast<ConstantInt>(value);
+Value * MustPointerAnalysis::tryGetConstantValue(Value * value) {
+    /*Value * CI = dyn_cast<Value>(value);
     if (CI && CI->getBitWidth() <= 32) {
         return CI;
     }
 
-    map<string,ConstantInt*> edgeMap = _incomingEdge->getFacts();
-    map<string,ConstantInt*>::iterator iterator = edgeMap.find(value->getName().str());
+    map<string,Value*> edgeMap = _incomingEdge->getFacts();
+    map<string,Value*>::iterator iterator = edgeMap.find(value->getName().str());
 
     if (iterator != edgeMap.end()) {
         return iterator->second;
-    }
+    }*/
 
     return NULL;
 }
 
 void MustPointerAnalysis::handleBinaryOp(Instruction * inst) {
-	map<string,ConstantInt*> constantMap = _incomingEdge->getFacts();
+	map<string,Value*> constantMap = _incomingEdge->getFacts();
 	string dest = inst->getOperandUse(0).getUser()->getName().str();
 	constantMap.erase(dest);
-    ConstantInt * operandConstant1 = tryGetConstantValue(inst->getOperand(0));
-    ConstantInt * operandConstant2 = tryGetConstantValue(inst->getOperand(1));
+    Value * operandConstant1 = tryGetConstantValue(inst->getOperand(0));
+    Value * operandConstant2 = tryGetConstantValue(inst->getOperand(1));
 
     errs() << "Operands:  " <<  inst->getOperand(0)->getName().str() << "\t" << inst->getOperand(1)->getName().str() <<
     "\tdest" << inst->getOperandUse(0).getUser()->getName().str() << "\n";
@@ -196,8 +196,8 @@ void MustPointerAnalysis::handleBinaryOp(Instruction * inst) {
         return;
     }
 
-    int64_t operand1 = operandConstant1->getSExtValue();
-    int64_t operand2 = operandConstant2->getSExtValue();
+    int64_t operand1;// = operandConstant1->getSExtValue();
+    int64_t operand2;// = operandConstant2->getSExtValue();
     int64_t result;
 
     switch (inst->getOpcode()) {
@@ -237,7 +237,7 @@ void MustPointerAnalysis::handleBinaryOp(Instruction * inst) {
     }
 
     IntegerType * integerType = IntegerType::get(inst->getContext(), 32);
-    ConstantInt * resultConstant = ConstantInt::getSigned(integerType, result);
+    Value * resultConstant;// = Value::getSigned(integerType, result);
     constantMap[dest] = resultConstant;
     _outgoingEdge->setNewFacts(false, false, constantMap);
 }
@@ -250,8 +250,8 @@ void MustPointerAnalysis::handleConditionalBranchInst(BranchInst * inst) {
 	// false will change, true will not
 
 	*_outgoingEdge = *_incomingEdge;//temp may remove later
-	map<string,ConstantInt*> trueMap = _incomingEdge->getFacts();
-	map<string,ConstantInt*> falseMap = _incomingEdge->getFacts();
+	map<string,Value*> trueMap = _incomingEdge->getFacts();
+	map<string,Value*> falseMap = _incomingEdge->getFacts();
 
 	Value * condition = inst->getCondition();
 	if (!ICmpInst::classof(condition)) { // no information, just copy and exit
@@ -264,8 +264,8 @@ void MustPointerAnalysis::handleConditionalBranchInst(BranchInst * inst) {
 		int predicate = cmpInst->isSigned() ? cmpInst->getSignedPredicate() : cmpInst->getUnsignedPredicate();
 		Value * lhs = cmpInst->getOperand(0);
 		Value * rhs = cmpInst->getOperand(1);
-		ConstantInt * rhsConstant = tryGetConstantValue(rhs);
-		ConstantInt * lhsConstant = tryGetConstantValue(lhs);
+		Value * rhsConstant = tryGetConstantValue(rhs);
+		Value * lhsConstant = tryGetConstantValue(lhs);
 		if ((lhsConstant && rhsConstant) || (!lhsConstant && !rhsConstant)) { //both constants, no information,just copy and exit
 			*_outgoingTrueEdge  = *_incomingEdge;
 			*_outgoingFalseEdge = *_incomingEdge;
@@ -299,9 +299,5 @@ void MustPointerAnalysis::handleConditionalBranchInst(BranchInst * inst) {
 			errs() << "[MustPointerAnalysis::handleConditionalBranchInst] WTF situation\n";
 		}
 	}
-
-	
-
-
 }
 

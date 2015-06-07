@@ -31,6 +31,6 @@ private:
     void handleLoadInst(LoadInst * loadInst);
     void handleBinaryOp(Instruction * inst);
 	void handleConditionalBranchInst(BranchInst * inst);
-    ConstantInt * tryGetConstantValue(Value * value);
+    Value* tryGetConstantValue(Value * value);
 };
 

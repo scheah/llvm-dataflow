@@ -15,18 +15,18 @@ using namespace std;
 class MustPointerLattice {
 public:
 	MustPointerLattice();
-	MustPointerLattice(bool isTop, bool isBottom, map<string, ConstantInt *> facts);
+	MustPointerLattice(bool isTop, bool isBottom, map<string, Value*> facts);
 	MustPointerLattice(MustPointerLattice& other);
 	MustPointerLattice& operator=(const MustPointerLattice& other);
 	~MustPointerLattice();
-	map<string, ConstantInt *> getFacts();
-	void setNewFacts(bool isTop, bool isBottom, map<string, ConstantInt *> facts);
+	map<string, Value*> getFacts();
+	void setNewFacts(bool isTop, bool isBottom, map<string, Value*> facts);
 	bool isTop();
 	bool isBottom();
     void dump();
 
 private:
-	map<string, ConstantInt*> _facts;
+	map<string, Value*> _facts;
 	bool _isTop;
 	bool _isBottom;
 

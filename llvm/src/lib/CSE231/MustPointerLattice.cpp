@@ -2,7 +2,7 @@
 
 MustPointerLattice::MustPointerLattice() {}
 
-MustPointerLattice::MustPointerLattice(bool isTop, bool isBottom, map<string, ConstantInt *> facts) {
+MustPointerLattice::MustPointerLattice(bool isTop, bool isBottom, map<string, Value*> facts) {
 	// Must Analysis, bottom is Full set, top is empty set
 	_facts = facts;
 	_isTop = isTop;
@@ -24,11 +24,11 @@ MustPointerLattice& MustPointerLattice::operator=( const MustPointerLattice& oth
 
 MustPointerLattice::~MustPointerLattice() {}
 
-map<string, ConstantInt *> MustPointerLattice::getFacts() {
+map<string, Value*> MustPointerLattice::getFacts() {
 	return _facts; //returns a copy
 }
 
-void MustPointerLattice::setNewFacts(bool isTop, bool isBottom, map<string, ConstantInt *> facts) {
+void MustPointerLattice::setNewFacts(bool isTop, bool isBottom, map<string, Value*> facts) {
 	_facts = facts;
 	_isTop = isTop;
 	_isBottom = isBottom;
@@ -50,8 +50,8 @@ void MustPointerLattice::dump() {
         errs() << "\t\t\tis Bottom\n";
     }
     else {
-        for (map<string, ConstantInt *>::iterator i = _facts.begin(); i != _facts.end(); i++) {
-            errs() << "\t\t\t\t" << i->first << " -> " << i->second->getSExtValue() << "\n";
+        for (map<string, Value*>::iterator i = _facts.begin(); i != _facts.end(); i++) {
+            //errs() << "\t\t\t\t" << i->first << " -> " << i->second->getSExtValue() << "\n";
             //errs() << "\t\t\tKey " << i->first << "\n";
             //errs() << "\t\t\tVal " << i->second->getSExtValue() << "\n";
         }
