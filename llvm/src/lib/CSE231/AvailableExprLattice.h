@@ -13,12 +13,13 @@
 using namespace llvm;
 using namespace std;
 
+/*
 struct expressionComp : public binary_function<Expression*,Expression*,bool> {
     bool operator()(Expression * const a, Expression * const b) {
         return a->isEqualTo(b);
     }
 };
-
+*/
 class AvailableExprLattice : public BaseLattice {
 public:
 	AvailableExprLattice();
