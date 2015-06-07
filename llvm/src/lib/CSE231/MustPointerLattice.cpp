@@ -51,6 +51,8 @@ void MustPointerLattice::dump() {
     }
     else {
         for (map<string, Value*>::iterator i = _facts.begin(); i != _facts.end(); i++) {
+            errs() << "\t\t\t\t" << i->first << " -> " << i->second->getName() << "\n";
+
             //errs() << "\t\t\t\t" << i->first << " -> " << i->second->getSExtValue() << "\n";
             //errs() << "\t\t\tKey " << i->first << "\n";
             //errs() << "\t\t\tVal " << i->second->getSExtValue() << "\n";

@@ -26,17 +26,17 @@ bool MustPointerAnalysis::isConditionalBranch() {
 
 void MustPointerAnalysis::applyFlowFunction() {
     if (StoreInst::classof(_instruction)) {
-        //handleStoreInst((StoreInst *) _instruction);
+        handleStoreInst((StoreInst *) _instruction);
     }
     else if (LoadInst::classof(_instruction)) {
-        //handleLoadInst((LoadInst *) _instruction);
+        handleLoadInst((LoadInst *) _instruction);
     }
-    else if (_instruction->isBinaryOp()) {
+    //else if (_instruction->isBinaryOp()) {
         //handleBinaryOp(_instruction);            
-    }
-	else if (_isConditionalBranch) {
+    //}
+	//else if (_isConditionalBranch) {
 		//handleConditionalBranchInst((BranchInst *) _instruction);
-	}
+	//}
 	else { //temp 
 		*_outgoingEdge = *_incomingEdge;
 	}
@@ -147,99 +147,32 @@ void MustPointerAnalysis::handleStoreInst(StoreInst * storeInst) {
 	string name = storeInst->getPointerOperand()->getName().str();
 	map<string, Value *> edgeMap = _incomingEdge->getFacts(); 
 	edgeMap.erase(name);
-    Value* CI = tryGetConstantValue(storeInst->getValueOperand());
-    if (CI == NULL) {
-		errs() << "[MustPointerAnalysis::handleStoreInst] not a Value\n";
+
+    const Type* type = storeInst->getPointerOperand()->getType();
+
+    if (type->isPointerTy() && type->getContainedType(0)->isPointerTy()) {
+        errs() << "POINTERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR\n";
+        edgeMap[name] = storeInst->getValueOperand();
+
+        if (type->getContainedType(0)->isPointerTy()) {
+            errs() << "MORE POINTERRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR\n";
+        }
     }
-	else
-		edgeMap[name] = CI;
-	_outgoingEdge->setNewFacts(false,false,edgeMap);
+
+    _outgoingEdge->setNewFacts(false,false,edgeMap);
 }
 
 void MustPointerAnalysis::handleLoadInst(LoadInst * loadInst) {
     map<string, Value *> edgeMap = _incomingEdge->getFacts();
 	edgeMap.erase(loadInst->getOperandUse(0).getUser()->getName().str());
-	if (edgeMap.count(loadInst->getOperand(0)->getName().str()) > 0)
-    	edgeMap[loadInst->getOperandUse(0).getUser()->getName().str()] = edgeMap[loadInst->getOperand(0)->getName().str()];
+	
+    const Type* type = loadInst->getOperand(0)->getType();
+    if (type->isPointerTy() && type->getContainedType(0)->isPointerTy()) {
+        errs() << "LOADDDDDDDDDDDDDDDDDDDDD POINTERRRRRRRRRRRRRRRRRRRRRR\n";
+        edgeMap[loadInst->getOperandUse(0).getUser()->getName().str()] = loadInst->getOperand(0);
+    }
+    
     _outgoingEdge->setNewFacts(false,false,edgeMap);
-}
-
-Value * MustPointerAnalysis::tryGetConstantValue(Value * value) {
-    /*Value * CI = dyn_cast<Value>(value);
-    if (CI && CI->getBitWidth() <= 32) {
-        return CI;
-    }
-
-    map<string,Value*> edgeMap = _incomingEdge->getFacts();
-    map<string,Value*>::iterator iterator = edgeMap.find(value->getName().str());
-
-    if (iterator != edgeMap.end()) {
-        return iterator->second;
-    }*/
-
-    return NULL;
-}
-
-void MustPointerAnalysis::handleBinaryOp(Instruction * inst) {
-	map<string,Value*> constantMap = _incomingEdge->getFacts();
-	string dest = inst->getOperandUse(0).getUser()->getName().str();
-	constantMap.erase(dest);
-    Value * operandConstant1 = tryGetConstantValue(inst->getOperand(0));
-    Value * operandConstant2 = tryGetConstantValue(inst->getOperand(1));
-
-    errs() << "Operands:  " <<  inst->getOperand(0)->getName().str() << "\t" << inst->getOperand(1)->getName().str() <<
-    "\tdest" << inst->getOperandUse(0).getUser()->getName().str() << "\n";
-
-    if (operandConstant1 == NULL || operandConstant2 == NULL) {
-		_outgoingEdge->setNewFacts(false, false, constantMap);
-        errs() << "No constant in binary op or variable is not in incoming edge.\n";
-        return;
-    }
-
-    int64_t operand1;// = operandConstant1->getSExtValue();
-    int64_t operand2;// = operandConstant2->getSExtValue();
-    int64_t result;
-
-    switch (inst->getOpcode()) {
-        case Instruction::Add:
-            result = operand1 + operand2;
-            break;
-
-        case Instruction::Mul:
-            result = operand1 * operand2;
-            break;
-
-        case Instruction::Sub:
-            result = operand1 - operand2;
-            break;
-
-        case Instruction::SDiv:
-        case Instruction::UDiv:
-            result = operand1 / operand2;
-            break;
-
-        case Instruction::SRem:
-        case Instruction::URem:
-            result = operand1 % operand2;
-            break;
-
-        case Instruction::Or:
-            result = operand1 | operand2;
-            break;
-
-        case Instruction::And:
-            result = operand1 & operand2;
-            break;
-
-        case Instruction::Xor:
-            result = operand1 ^ operand2;
-            break;
-    }
-
-    IntegerType * integerType = IntegerType::get(inst->getContext(), 32);
-    Value * resultConstant;// = Value::getSigned(integerType, result);
-    constantMap[dest] = resultConstant;
-    _outgoingEdge->setNewFacts(false, false, constantMap);
 }
 
 void MustPointerAnalysis::handleConditionalBranchInst(BranchInst * inst) {
