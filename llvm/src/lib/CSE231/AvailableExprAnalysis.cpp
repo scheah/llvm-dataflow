@@ -3,7 +3,7 @@
 
 AvailableExprAnalysis::AvailableExprAnalysis(Instruction * inst, AvailableExprLattice * incoming) {
 	_instruction = inst;
-	map<Expression*,vector<string>,expressionComp> empty;
+	ExpressionContainer empty;
 	_incomingEdge = new AvailableExprLattice(false,true,empty);
 	*_incomingEdge = *incoming;
 	_outgoingEdge = new AvailableExprLattice(false,true,empty);
@@ -32,7 +32,7 @@ void AvailableExprAnalysis::setIncomingEdge(AvailableExprLattice * incoming) {
 
 // will be a join
 AvailableExprLattice * AvailableExprAnalysis::merge(AvailableExprLattice * edge_1, AvailableExprLattice * edge_2) {
-	map<Expression*,vector<string>,expressionComp> outgoingEdge;
+	ExpressionContainer outgoingEdge;
 	if (edge_1->isTop() || edge_2->isTop()) {
 		return new AvailableExprLattice(true, false, outgoingEdge); // return Top
 	}
@@ -45,13 +45,14 @@ AvailableExprLattice * AvailableExprAnalysis::merge(AvailableExprLattice * edge_
 	else if (edge_2->isBottom()) {
 		return new AvailableExprLattice(false, false, edge_1->getFacts());
 	}
-	map<Expression*,vector<string>,expressionComp> edge1 = edge_1->getFacts();
-	map<Expression*,vector<string>,expressionComp> edge2 = edge_2->getFacts();
+	map<string,Expression*> edge1 = edge_1->getFacts().getMap();
+	map<string,Expression*> edge2 = edge_2->getFacts().getMap();
 
-    for (map<Expression*,vector<string>,expressionComp>::iterator i = edge1.begin(); i != edge1.end(); i++) {
+    for (map<string,Expression*>::iterator i = edge1.begin(); i != edge1.end(); i++) {
         //bool isEqualInBothEdges = false;
-        for (map<Expression*,vector<string>,expressionComp>::iterator j = edge2.begin(); j != edge2.end(); j++) {
+        for (map<string,Expression*>::iterator j = edge2.begin(); j != edge2.end(); j++) {
             // If item is in both edges and are equal, add to outgoing edge
+            /*
             if (i->first->isEqual(j->first)) {
                 vector<string> v(i->second.size() + j->second.size());
                 vector<string>::iterator it;
@@ -61,6 +62,7 @@ AvailableExprLattice * AvailableExprAnalysis::merge(AvailableExprLattice * edge_
                 outgoingEdge[i->first] = v;
                 break;
             }
+            */
         }
     }
     
@@ -72,11 +74,11 @@ bool AvailableExprAnalysis::equal(AvailableExprLattice * edge_1, AvailableExprLa
 		return true;
 	else if(edge_1->isBottom() && edge_2->isBottom())
 		return true;
-	map<Expression*,vector<string>,expressionComp> edge1 = edge_1->getFacts();
-	map<Expression*,vector<string>,expressionComp> edge2 = edge_2->getFacts();
+	map<string,Expression*> edge1 = edge_1->getFacts().getMap();
+	map<string,Expression*> edge2 = edge_2->getFacts().getMap();
     if(edge1.size() != edge2.size())
         return false;
-    for (map<Expression*,vector<string>,expressionComp>::iterator i = edge1.begin(); i != edge1.end(); i++) {
+    for (map<string,Expression*>::iterator i = edge1.begin(); i != edge1.end(); i++) {
         if (edge1[i->first] != edge2[i->first])
             return false;
     }
@@ -95,8 +97,10 @@ void AvailableExprAnalysis::dump() {
 }
 
 void AvailableExprAnalysis::handleBinaryOp(Instruction * inst) {
-    map<Expression *, vector<string>, expressionComp> edgeMap = _incomingEdge->getFacts();
-    edgeMap[new Expression(inst)].push_back(inst->getOperandUse(0).getUser()->getName().str());
+    ExpressionContainer edgeMap = _incomingEdge->getFacts();
+
+    edgeMap.addExpression(inst->getOperandUse(0).getUser()->getName().str(), new Expression(inst));
+    //edgeMap[new Expression(inst)].push_back(inst->getOperandUse(0).getUser()->getName().str());
 
     _outgoingEdge->setNewFacts(false,false,edgeMap);
 }

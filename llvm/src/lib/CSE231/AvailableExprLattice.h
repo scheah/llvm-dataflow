@@ -6,9 +6,8 @@
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/raw_ostream.h"
 #include "BaseLattice.h"
-#include "Expression.h"
+#include "ExpressionContainer.h"
 
-#include <map>
 #include <string>
 
 using namespace llvm;
@@ -23,18 +22,18 @@ struct expressionComp : public binary_function<Expression*,Expression*,bool> {
 class AvailableExprLattice : public BaseLattice {
 public:
 	AvailableExprLattice();
-	AvailableExprLattice(bool isTop, bool isBottom, map<Expression *,vector<string>,expressionComp> facts);
+	AvailableExprLattice(bool isTop, bool isBottom, ExpressionContainer facts);
 	AvailableExprLattice(AvailableExprLattice& other);
 	AvailableExprLattice& operator=(const AvailableExprLattice& other);
 	~AvailableExprLattice();
-	map<Expression *,vector<string>,expressionComp> getFacts();
-	void setNewFacts(bool isTop, bool isBottom, map<Expression *,vector<string>,expressionComp> facts);
+	ExpressionContainer getFacts();
+	void setNewFacts(bool isTop, bool isBottom, ExpressionContainer facts);
 	bool isTop();
 	bool isBottom();
     void dump();
 
 private:
-    map<Expression *,vector<string>,expressionComp> _facts;
+    ExpressionContainer _facts;
 
 };
 

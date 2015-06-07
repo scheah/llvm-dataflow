@@ -59,13 +59,13 @@ namespace {
 					}
 					else {
 						errs() << "\t\t\tNo incoming edge from this, pushing bottom (full set)\n";
-						map<Expression*,vector<string>,expressionComp> empty;
+						ExpressionContainer empty;
 						predecessorEdges.push_back(new AvailableExprLattice(false,true,empty)); //mem leak here
 					}
 				}
 				// perform mergings	
 				// if no predecessors: incomingEdge will be bottom
-				map<Expression*,vector<string>,expressionComp> empty;		
+				ExpressionContainer empty;		
 				AvailableExprLattice * incomingEdge = new AvailableExprLattice(false,true,empty);
 				if (predecessorEdges.size() == 1)
 					incomingEdge = predecessorEdges.front();
@@ -138,7 +138,7 @@ namespace {
 							predecessorEdges.push_back(blockInstAnalysis[pred->getName()].back()->getOutgoingEdge());
 						else {
 							errs() << "\t\t\tNo incoming edge from this, pushing bottom (full set)\n";
-							map<Expression*,vector<string>,expressionComp> empty;
+							ExpressionContainer empty;
 							predecessorEdges.push_back(new AvailableExprLattice(false,true,empty)); //mem leak here
 						}
 					}

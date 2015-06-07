@@ -48,7 +48,6 @@ string Expression::operand2Name() {
 }
 
 bool Expression::isEqual(Expression *  expression) {
-    errs() << "YEAHHHHHHHHHHHHHHHHHHHHHH\n";
         if (_instruction->isCommutative() && 
            (_instruction->getOpcode() == expression->_instruction->getOpcode()) &&
           ((operand1Name() == expression->operand1Name() && operand2Name() == expression->operand2Name()) ||
