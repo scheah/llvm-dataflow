@@ -53,12 +53,13 @@ bool Expression::isEqualTo(Expression * expression) {
              operand2Name() == expression->operand2Name()) ||
             (operand1Name() == expression->operand2Name() &&
              operand2Name() == expression->operand1Name())) {
+            return false;
         }
         else {
-            return operand1Name() < expression->operand1Name();
+            return operand1Name() < expression->operand1Name() || operand2Name() < expression->operand2Name();
         }
     }
 
-    return operand1Name() > expression->operand1Name();
+    return operand1Name() > expression->operand1Name() || operand2Name() > expression->operand2Name();
 }
 
