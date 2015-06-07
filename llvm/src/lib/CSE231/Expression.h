@@ -6,12 +6,6 @@ using namespace std;
 
 class Expression {
 public:
-    //Value * getOperand1();
-    //Value * getOperand2();
-    //string operand1Name();
-    //string operand2Name();
-    //bool isEqualTo(Expression * expression);
-
     virtual void dump() = 0;
 
 protected:
@@ -21,15 +15,14 @@ protected:
     Instruction * _instruction;
 };
 
-/*
 class UnaryExpression : public Expression {
 public:
     UnaryExpression(Instruction * instruction);
 
     Value * getOperand();
+    string operandName();
     void dump();
 };
-*/
 
 class BinaryExpression : public Expression {
 public:

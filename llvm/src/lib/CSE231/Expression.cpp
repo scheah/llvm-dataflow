@@ -27,6 +27,21 @@ Expression::Expression(Instruction * instruction) {
     _instruction = instruction;
 }
 
+UnaryExpression::UnaryExpression(Instruction * instruction) : Expression(instruction) {
+}
+
+Value * UnaryExpression::getOperand() {
+    return _instruction->getOperand(0);
+}
+
+string UnaryExpression::operandName() {
+    return getOperand()->getName().str();
+}
+
+void UnaryExpression::dump() {
+    errs() << operandName();
+}
+
 BinaryExpression::BinaryExpression(Instruction * instruction) : Expression(instruction) {
 }
 
