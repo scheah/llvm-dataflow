@@ -56,10 +56,13 @@ bool Expression::isEqualTo(Expression * expression) {
             return false;
         }
         else {
-            return operand1Name() < expression->operand1Name() || operand2Name() < expression->operand2Name();
         }
     }
 
-    return operand1Name() > expression->operand1Name() || operand2Name() > expression->operand2Name();
+    if (_instruction->getOpcode() == expression->_instruction->getOpcode()) {
+        return (operand1Name() > expression->operand1Name() || operand2Name() > expression->operand2Name());
+    }
+
+    return _instruction->getOpcode() < expression->_instruction->getOpcode();
 }
 

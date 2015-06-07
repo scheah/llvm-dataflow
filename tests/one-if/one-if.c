@@ -2,19 +2,20 @@
 
 int main(void)
 {
-    int i = 0;
+    int i = 5;
+    int j = i + 5;
+    int k = i + 5;
+    int l = 5 + i;
+    int m = 6 + i;
+    int n = 7 - i;
+    int o = i - 7;
+    int p = 10 * i;
+    int q = i * 10;
+    int r = i / 10;
+    int s = 10 / i;
+    int t = i % 10;
+    int u = 10 % i;
 
-//    if (i == 5) {
-        i = i * 5;
-    //}
-  //  else {
-        i = i + 5;
-        //i = 10 + 7;
-        //i = 10 - i;
-        //i = i - 10;
-        //i = 10 / i;
-        //i = i / 10;
-    //}
 
     return i;
 }
