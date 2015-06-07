@@ -2,7 +2,7 @@
 
 AvailableExprLattice::AvailableExprLattice() {}
 
-AvailableExprLattice::AvailableExprLattice(bool isTop, bool isBottom, map<string, ConstantInt *> facts) {
+AvailableExprLattice::AvailableExprLattice(bool isTop, bool isBottom, map<string, Expression *> facts) {
 	// Must Analysis, bottom is Full set, top is empty set
 	_facts = facts;
 	_isTop = isTop;
@@ -24,11 +24,11 @@ AvailableExprLattice& AvailableExprLattice::operator=( const AvailableExprLattic
 
 AvailableExprLattice::~AvailableExprLattice() {}
 
-map<string, ConstantInt *> AvailableExprLattice::getFacts() {
+map<string, Expression *> AvailableExprLattice::getFacts() {
 	return _facts; //returns a copy
 }
 
-void AvailableExprLattice::setNewFacts(bool isTop, bool isBottom, map<string, ConstantInt *> facts) {
+void AvailableExprLattice::setNewFacts(bool isTop, bool isBottom, map<string, Expression *> facts) {
 	_facts = facts;
 	_isTop = isTop;
 	_isBottom = isBottom;
@@ -50,10 +50,10 @@ void AvailableExprLattice::dump() {
         errs() << "\t\t\tis Bottom\n";
     }
     else {
-        for (map<string, ConstantInt *>::iterator i = _facts.begin(); i != _facts.end(); i++) {
-            errs() << "\t\t\t\t" << i->first << " -> " << i->second->getSExtValue() << "\n";
-            //errs() << "\t\t\tKey " << i->first << "\n";
-            //errs() << "\t\t\tVal " << i->second->getSExtValue() << "\n";
+        for (map<string, Expression *>::iterator i = _facts.begin(); i != _facts.end(); i++) {
+            errs() << "\t\t\t" << i->first << " -> ";
+            i->second->dump();
+            errs() << "\n";
         }
     }
 }
