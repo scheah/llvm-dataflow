@@ -15,6 +15,8 @@ public:
 
     void dump();
 
+    bool isEqual(Expression * expression);
+
 private:
     string getNameOf(Value * value);
 

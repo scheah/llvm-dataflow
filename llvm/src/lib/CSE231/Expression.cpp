@@ -47,6 +47,24 @@ string Expression::operand2Name() {
     return getNameOf(getOperand2());
 }
 
+bool Expression::isEqual(Expression *  expression) {
+    errs() << "YEAHHHHHHHHHHHHHHHHHHHHHH\n";
+        if (_instruction->isCommutative() && 
+           (_instruction->getOpcode() == expression->_instruction->getOpcode()) &&
+          ((operand1Name() == expression->operand1Name() && operand2Name() == expression->operand2Name()) ||
+           (operand1Name() == expression->operand2Name() && operand2Name() == expression->operand1Name()))) {
+            return true;
+        }
+        else if (!_instruction->isCommutative() && 
+            (_instruction->getOpcode() == expression->_instruction->getOpcode()) &&
+            operand1Name() == expression->operand1Name() &&
+                                operand2Name() == expression->operand2Name()) {
+                                        return true;
+                                            }
+
+                                                return false;
+}
+
 bool Expression::isEqualTo(Expression * expression) {
     if (_instruction->isCommutative() && _instruction->getOpcode() == expression->_instruction->getOpcode()) {
         if ((operand1Name() == expression->operand1Name() &&
