@@ -2,7 +2,7 @@
 
 RangeLattice::RangeLattice() {}
 
-RangeLattice::RangeLattice(bool isTop, bool isBottom, map<string, ConstantInt *> facts) {
+RangeLattice::RangeLattice(bool isTop, bool isBottom, map<string, vector<int> > facts) {
 	// May Analysis, bottom is empty set, top is full set
 	_facts = facts;
 	_isTop = isTop;
@@ -24,11 +24,11 @@ RangeLattice& RangeLattice::operator=( const RangeLattice& other ) {
 
 RangeLattice::~RangeLattice() {}
 
-map<string, ConstantInt *> RangeLattice::getFacts() {
+map<string, vector<int> > RangeLattice::getFacts() {
 	return _facts; //returns a copy
 }
 
-void RangeLattice::setNewFacts(bool isTop, bool isBottom, map<string, ConstantInt *> facts) {
+void RangeLattice::setNewFacts(bool isTop, bool isBottom, map<string, vector<int> > facts) {
 	_facts = facts;
 	_isTop = isTop;
 	_isBottom = isBottom;
@@ -50,8 +50,8 @@ void RangeLattice::dump() {
         errs() << "\t\t\tis Bottom\n";
     }
     else {
-        for (map<string, ConstantInt *>::iterator i = _facts.begin(); i != _facts.end(); i++) {
-            errs() << "\t\t\t\t" << i->first << " -> " << i->second->getSExtValue() << "\n";
+        for (map<string, vector<int> >::iterator i = _facts.begin(); i != _facts.end(); i++) {
+            errs() << "\t\t\t\t" << i->first << " -> (" << i->second[0] << ", " << i->second[1] << ")\n";
             //errs() << "\t\t\tKey " << i->first << "\n";
             //errs() << "\t\t\tVal " << i->second->getSExtValue() << "\n";
         }

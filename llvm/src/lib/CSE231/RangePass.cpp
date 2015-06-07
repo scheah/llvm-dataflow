@@ -60,14 +60,14 @@ namespace {
 						predecessorOutgoingEdge->dump();
 					}
 					else {
-						errs() << "\t\t\tNo incoming edge from this, pushing bottom (full set)\n";
-						map<string,ConstantInt*> empty;
+						errs() << "\t\t\tNo incoming edge from this, pushing bottom (empty set)\n";
+						map<string, vector<int> > empty;
 						predecessorEdges.push_back(new RangeLattice(false,true,empty)); //mem leak here
 					}
 				}
 				// perform mergings	
 				// if no predecessors: incomingEdge will be bottom
-				map<string,ConstantInt*> empty;		
+				map<string, vector<int> > empty;		
 				RangeLattice * incomingEdge = new RangeLattice(false,true,empty);
 				if (predecessorEdges.size() == 1)
 					incomingEdge = predecessorEdges.front();
@@ -142,8 +142,8 @@ namespace {
 							predecessorOutgoingEdge->dump();
 						}
 						else {
-							errs() << "\t\t\tNo incoming edge from this, pushing bottom (full set)\n";
-							map<string,ConstantInt*> empty;
+							errs() << "\t\t\tNo incoming edge from this, pushing bottom (empty set)\n";
+							map<string, vector<int> > empty;
 							predecessorEdges.push_back(new RangeLattice(false,true,empty)); //mem leak here
 						}
 					}
@@ -199,4 +199,4 @@ namespace {
 }
 
 char RangePass::ID = 0;
-static RegisterPass<RangePass> X("block_order", "RangePass Pass");
+static RegisterPass<RangePass> X("RangePass", "RangePass");
