@@ -1,14 +1,14 @@
-#include "ConstantPropAnalysis.h"
+#include "MustPointerAnalysis.h"
 #include "llvm/Support/raw_ostream.h"
 
-ConstantPropAnalysis::ConstantPropAnalysis(Instruction * inst, ConstantLattice * incoming) {
+MustPointerAnalysis::MustPointerAnalysis(Instruction * inst, MustPointerLattice * incoming) {
 	_instruction = inst;
 	map<string,ConstantInt*> empty;
-	_incomingEdge = new ConstantLattice(false,true,empty);
+	_incomingEdge = new MustPointerLattice(false,true,empty);
 	*_incomingEdge = *incoming;
-	_outgoingEdge = new ConstantLattice(false,true,empty);
-	_outgoingTrueEdge = new ConstantLattice(false,true,empty);
-	_outgoingFalseEdge = new ConstantLattice(false,true,empty);
+	_outgoingEdge = new MustPointerLattice(false,true,empty);
+	_outgoingTrueEdge = new MustPointerLattice(false,true,empty);
+	_outgoingFalseEdge = new MustPointerLattice(false,true,empty);
 	if(BranchInst::classof(_instruction)) {
 		BranchInst * branchInst = (BranchInst *)_instruction;
 		if (branchInst->isConditional()) 
@@ -20,11 +20,11 @@ ConstantPropAnalysis::ConstantPropAnalysis(Instruction * inst, ConstantLattice *
 		_isConditionalBranch = false;
 }
 
-bool ConstantPropAnalysis::isConditionalBranch() {
+bool MustPointerAnalysis::isConditionalBranch() {
 	return _isConditionalBranch;
 }
 
-void ConstantPropAnalysis::applyFlowFunction() {
+void MustPointerAnalysis::applyFlowFunction() {
     if (StoreInst::classof(_instruction)) {
         handleStoreInst((StoreInst *) _instruction);
     }
@@ -42,17 +42,17 @@ void ConstantPropAnalysis::applyFlowFunction() {
 	}
 }
 
-Instruction * ConstantPropAnalysis::getInstruction() {
+Instruction * MustPointerAnalysis::getInstruction() {
     return _instruction;
 }
 
-ConstantLattice * ConstantPropAnalysis::getOutgoingEdge() {
+MustPointerLattice * MustPointerAnalysis::getOutgoingEdge() {
     return _outgoingEdge;
 }
 
-ConstantLattice * ConstantPropAnalysis::getOutgoingEdge(BasicBlock * toSuccessor) {
+MustPointerLattice * MustPointerAnalysis::getOutgoingEdge(BasicBlock * toSuccessor) {
 	if(!_isConditionalBranch) {
-		//errs() << "[ConstantPropAnalysis::getOutgoingEdge(BasicBlock * toSuccessor)] not a conditional branch predecessor, return normal outgoing edge\n";
+		//errs() << "[MustPointerAnalysis::getOutgoingEdge(BasicBlock * toSuccessor)] not a conditional branch predecessor, return normal outgoing edge\n";
 		return _outgoingEdge;
 	}
 	BranchInst * branchInst = (BranchInst * )_instruction;
@@ -65,29 +65,29 @@ ConstantLattice * ConstantPropAnalysis::getOutgoingEdge(BasicBlock * toSuccessor
 		return _outgoingFalseEdge;
 	}
 	else {
-		errs() << "[ConstantPropAnalysis::getOutgoingEdge(BasicBlock * toSuccessor)] the world is weird.\n";
+		errs() << "[MustPointerAnalysis::getOutgoingEdge(BasicBlock * toSuccessor)] the world is weird.\n";
 	}
 	return NULL;
 }
 
-void ConstantPropAnalysis::setIncomingEdge(ConstantLattice * incoming) {    
+void MustPointerAnalysis::setIncomingEdge(MustPointerLattice * incoming) {    
     *_incomingEdge = *incoming;
 }
 
 // will be a join
-ConstantLattice * ConstantPropAnalysis::merge(ConstantLattice * edge_1, ConstantLattice * edge_2) {
+MustPointerLattice * MustPointerAnalysis::merge(MustPointerLattice * edge_1, MustPointerLattice * edge_2) {
 	map<string,ConstantInt*> outgoingEdge;
 	if (edge_1->isTop() || edge_2->isTop()) {
-		return new ConstantLattice(true, false, outgoingEdge); // return Top
+		return new MustPointerLattice(true, false, outgoingEdge); // return Top
 	}
 	else if (edge_1->isBottom() && edge_2->isBottom()) {
-		return new ConstantLattice(false, true, outgoingEdge);
+		return new MustPointerLattice(false, true, outgoingEdge);
 	}
 	else if (edge_1->isBottom()) {
-		return new ConstantLattice(false, false, edge_2->getFacts());
+		return new MustPointerLattice(false, false, edge_2->getFacts());
 	}
 	else if (edge_2->isBottom()) {
-		return new ConstantLattice(false, false, edge_1->getFacts());
+		return new MustPointerLattice(false, false, edge_1->getFacts());
 	}
 	map<string, ConstantInt *> edge1 = edge_1->getFacts();
 	map<string, ConstantInt *> edge2 = edge_2->getFacts();
@@ -106,10 +106,10 @@ ConstantLattice * ConstantPropAnalysis::merge(ConstantLattice * edge_1, Constant
             outgoingEdge[i->first] = i->second;
         }
     }
-    return new ConstantLattice(false, false, outgoingEdge);
+    return new MustPointerLattice(false, false, outgoingEdge);
 }
 
-bool ConstantPropAnalysis::equal(ConstantLattice * edge_1, ConstantLattice * edge_2) {
+bool MustPointerAnalysis::equal(MustPointerLattice * edge_1, MustPointerLattice * edge_2) {
 	if(edge_1->isTop() && edge_2->isTop()) 
 		return true;
 	else if(edge_1->isBottom() && edge_2->isBottom())
@@ -126,7 +126,7 @@ bool ConstantPropAnalysis::equal(ConstantLattice * edge_1, ConstantLattice * edg
     return true;
 }
 
-void ConstantPropAnalysis::dump() {
+void MustPointerAnalysis::dump() {
     errs() << "\t\t\tINCOMING:\n";
     _incomingEdge->dump();
 
@@ -143,20 +143,20 @@ void ConstantPropAnalysis::dump() {
     errs() << "\t\t--------------------------------------------------------\n";
 }
 
-void ConstantPropAnalysis::handleStoreInst(StoreInst * storeInst) {
+void MustPointerAnalysis::handleStoreInst(StoreInst * storeInst) {
 	string name = storeInst->getPointerOperand()->getName().str();
 	map<string, ConstantInt *> edgeMap = _incomingEdge->getFacts(); 
 	edgeMap.erase(name);
     ConstantInt* CI = tryGetConstantValue(storeInst->getValueOperand());
     if (CI == NULL) {
-		errs() << "[ConstantPropAnalysis::handleStoreInst] not a ConstantInt\n";
+		errs() << "[MustPointerAnalysis::handleStoreInst] not a ConstantInt\n";
     }
 	else
 		edgeMap[name] = CI;
 	_outgoingEdge->setNewFacts(false,false,edgeMap);
 }
 
-void ConstantPropAnalysis::handleLoadInst(LoadInst * loadInst) {
+void MustPointerAnalysis::handleLoadInst(LoadInst * loadInst) {
     map<string, ConstantInt *> edgeMap = _incomingEdge->getFacts();
 	edgeMap.erase(loadInst->getOperandUse(0).getUser()->getName().str());
 	if (edgeMap.count(loadInst->getOperand(0)->getName().str()) > 0)
@@ -164,7 +164,7 @@ void ConstantPropAnalysis::handleLoadInst(LoadInst * loadInst) {
     _outgoingEdge->setNewFacts(false,false,edgeMap);
 }
 
-ConstantInt * ConstantPropAnalysis::tryGetConstantValue(Value * value) {
+ConstantInt * MustPointerAnalysis::tryGetConstantValue(Value * value) {
     ConstantInt * CI = dyn_cast<ConstantInt>(value);
     if (CI && CI->getBitWidth() <= 32) {
         return CI;
@@ -180,7 +180,7 @@ ConstantInt * ConstantPropAnalysis::tryGetConstantValue(Value * value) {
     return NULL;
 }
 
-void ConstantPropAnalysis::handleBinaryOp(Instruction * inst) {
+void MustPointerAnalysis::handleBinaryOp(Instruction * inst) {
 	map<string,ConstantInt*> constantMap = _incomingEdge->getFacts();
 	string dest = inst->getOperandUse(0).getUser()->getName().str();
 	constantMap.erase(dest);
@@ -242,7 +242,7 @@ void ConstantPropAnalysis::handleBinaryOp(Instruction * inst) {
     _outgoingEdge->setNewFacts(false, false, constantMap);
 }
 
-void ConstantPropAnalysis::handleConditionalBranchInst(BranchInst * inst) {
+void MustPointerAnalysis::handleConditionalBranchInst(BranchInst * inst) {
 	// Branch flow: 
 	// a == 0
 	// true will change, false will not
@@ -296,7 +296,7 @@ void ConstantPropAnalysis::handleConditionalBranchInst(BranchInst * inst) {
 			}
 		}
 		else {
-			errs() << "[ConstantPropAnalysis::handleConditionalBranchInst] WTF situation\n";
+			errs() << "[MustPointerAnalysis::handleConditionalBranchInst] WTF situation\n";
 		}
 	}
 
