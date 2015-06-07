@@ -34,5 +34,6 @@ private:
 	void handleConditionalBranchInst(BranchInst * inst);
 	ConstantInt * tryGetConstantValue(Value * value);
 	vector<int> tryGetRange(Value * value);
+	vector<int> intersect(vector<int> left, vector<int> right);
 };
 
