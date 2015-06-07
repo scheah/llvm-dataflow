@@ -28,6 +28,7 @@ private:
 	RangeLattice * _outgoingTrueEdge;
 	RangeLattice * _outgoingFalseEdge;
 	bool _isConditionalBranch;
+	void handleAllocaInst(AllocaInst * allocaInst);
     void handleStoreInst(StoreInst * storeInst);
     void handleLoadInst(LoadInst * loadInst);
     void handleBinaryOp(Instruction * inst);

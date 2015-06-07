@@ -26,7 +26,10 @@ bool RangeAnalysis::isConditionalBranch() {
 }
 
 void RangeAnalysis::applyFlowFunction() {
-    if (StoreInst::classof(_instruction)) {
+	if (AllocaInst::classof(_instruction)) {
+        handleAllocaInst((AllocaInst *) _instruction);
+    }
+    else if (StoreInst::classof(_instruction)) {
         handleStoreInst((StoreInst *) _instruction);
     }
     else if (LoadInst::classof(_instruction)) {
@@ -172,6 +175,17 @@ void RangeAnalysis::dump() {
 		_outgoingFalseEdge->dump();
 	}
     errs() << "\t\t--------------------------------------------------------\n";
+}
+
+void RangeAnalysis::handleAllocaInst(AllocaInst * allocaInst) {
+	// we're gonna assume everything is an int
+	map<string, vector<int> > edgeMap = _incomingEdge->getFacts();
+	edgeMap.erase(allocaInst->getOperandUse(0).getUser()->getName().str());
+	vector<int> intrange;
+	intrange.push_back(APInt::getSignedMinValue(32).getSExtValue());
+	intrange.push_back(APInt::getSignedMaxValue(32).getSExtValue());
+	edgeMap[allocaInst->getOperandUse(0).getUser()->getName().str()] = intrange;
+	_outgoingEdge->setNewFacts(false,false,edgeMap);
 }
 
 void RangeAnalysis::handleStoreInst(StoreInst * storeInst) {
@@ -454,7 +468,7 @@ void RangeAnalysis::handleConditionalBranchInst(BranchInst * inst) {
 		Value * variable = NULL;
 		ConstantInt * constant = NULL;
 		vector<int> range; //empty
-		if ((lhsConstant && rhsConstant)) { //both constants, no information,just copy and exit
+		if ((lhsConstant && rhsConstant) || (lhsRange.empty() && rhsRange.empty())) { //both constants or both , no information,just copy and exit
 			*_outgoingTrueEdge  = *_incomingEdge;
 			*_outgoingFalseEdge = *_incomingEdge;
 			return;
@@ -467,15 +481,15 @@ void RangeAnalysis::handleConditionalBranchInst(BranchInst * inst) {
 			variable = rhs;
 			constant = lhsConstant;
 		}
-		else { // both variables
+		else { // both variables, trick situation
 			if (!lhsRange.empty() && !rhsRange.empty()) {
-				variable = NULL;
+				variable = NULL; //signal that both have ranges, we have to assign new may ranges to both variables!
 			}
-			else if (!lhsRange.empty()) {
+			else if (!lhsRange.empty()) { // assign to rhs, since it has no range
 				range = lhsRange;
 				variable = rhs;
 			}
-			else if (!rhsRange.empty()) {
+			else if (!rhsRange.empty()) { // assign to lhs, since it has no range
 				range = rhsRange;
 				variable = lhs;
 			}
@@ -716,7 +730,7 @@ void RangeAnalysis::handleConditionalBranchInst(BranchInst * inst) {
 		else { //both operands are ranges
 			range = rhsRange;
 			variable = lhs; // assign LHS first
-			for (int i=0; i < 2; i++) { //complete utter hack, just perform the variable and range code twice with interchanged assignment to true/false map
+			for (int i=0; i < 2; i++) { //complete utter hack, just perform the variable and range code twice with interchanged assignment to lhs/rhs
 				vector<int> variableRange = tryGetRange(variable);
 				if(predicate == CmpInst::ICMP_EQ) { // X == Y, Y->(min,max)
 					trueMap.erase(variable->getName().str());
@@ -861,7 +875,6 @@ vector<int> RangeAnalysis::intersect(vector<int> left, vector<int> right) {
 	else {
 		int varmin = max(left[0], right[0]);
 		int varmax = min(left[1], right[1]);
-		errs() << "NO INTERSECTION AT ALL\n";
 		if (varmin <= varmax) { // there is an intersection of values
         	result.push_back(varmin);
 			result.push_back(varmax);
