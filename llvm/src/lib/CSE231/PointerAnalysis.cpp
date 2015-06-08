@@ -186,14 +186,10 @@ PointerLattice * MayPointerAnalysis::merge(PointerLattice * edge_1, PointerLatti
 	map<string, set<Value*,valueComp> > edge2 = edge_2->getFacts();
 	
     for (map<string, set<Value*,valueComp> >::iterator i = edge1.begin(); i != edge1.end(); i++) {
-        for (map<string, set<Value*,valueComp> >::iterator j = edge2.begin(); j != edge2.end(); j++) {
-            // If item is in both edges and are equal, add to outgoing edge
-            //if (i->first == j->first) {
-                outgoingEdge[i->first].insert(i->second.begin(), i->second.end());
-                outgoingEdge[i->first].insert(j->second.begin(), j->second.end());
-                break;
-            //}
-        }
+        outgoingEdge[i->first].insert(i->second.begin(), i->second.end());
+    }
+    for (map<string, set<Value*,valueComp> >::iterator j = edge2.begin(); j != edge2.end(); j++) {
+        outgoingEdge[j->first].insert(j->second.begin(), j->second.end());
     }
 
     return new PointerLattice(false, false, outgoingEdge);
