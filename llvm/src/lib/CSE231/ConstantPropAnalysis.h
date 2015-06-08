@@ -1,4 +1,4 @@
-#include "ConstantLattice.h"
+#include "Lattice.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Value.h"
 
@@ -8,24 +8,24 @@ using namespace std;
 
 class ConstantPropAnalysis {
 public:
-	ConstantPropAnalysis(Instruction * inst, ConstantLattice * incoming);
+	ConstantPropAnalysis(Instruction * inst, Lattice< map<string,ConstantInt*> > * incoming);
     Instruction * getInstruction();
-    ConstantLattice * getOutgoingEdge();
-	ConstantLattice * getOutgoingEdge(BasicBlock * toSuccessor);
-    void setIncomingEdge(ConstantLattice * incoming);
+    Lattice< map<string,ConstantInt*> > * getOutgoingEdge();
+	Lattice< map<string,ConstantInt*> > * getOutgoingEdge(BasicBlock * toSuccessor);
+    void setIncomingEdge(Lattice< map<string,ConstantInt*> > * incoming);
 	bool isConditionalBranch();
     void applyFlowFunction();
     void dump();
     
-    static ConstantLattice * merge(ConstantLattice * edge_1, ConstantLattice * edge_2);
-    static bool equal(ConstantLattice * edge1, ConstantLattice * edge2);
+    static Lattice< map<string,ConstantInt*> > * merge(Lattice< map<string,ConstantInt*> > * edge_1, Lattice< map<string,ConstantInt*> > * edge_2);
+    static bool equal(Lattice< map<string,ConstantInt*> > * edge1, Lattice< map<string,ConstantInt*> > * edge2);
 
 private:
 	Instruction * _instruction;
-	ConstantLattice * _incomingEdge;
-	ConstantLattice * _outgoingEdge;
-	ConstantLattice * _outgoingTrueEdge;
-	ConstantLattice * _outgoingFalseEdge;
+	Lattice< map<string,ConstantInt*> > * _incomingEdge;
+	Lattice< map<string,ConstantInt*> > * _outgoingEdge;
+	Lattice< map<string,ConstantInt*> > * _outgoingTrueEdge;
+	Lattice< map<string,ConstantInt*> > * _outgoingFalseEdge;
 	bool _isConditionalBranch;
     void handleStoreInst(StoreInst * storeInst);
     void handleLoadInst(LoadInst * loadInst);

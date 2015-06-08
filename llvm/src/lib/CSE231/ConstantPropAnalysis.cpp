@@ -1,14 +1,14 @@
 #include "ConstantPropAnalysis.h"
 #include "llvm/Support/raw_ostream.h"
 
-ConstantPropAnalysis::ConstantPropAnalysis(Instruction * inst, ConstantLattice * incoming) {
+ConstantPropAnalysis::ConstantPropAnalysis(Instruction * inst, Lattice< map<string,ConstantInt*> > * incoming) {
 	_instruction = inst;
 	map<string,ConstantInt*> empty;
-	_incomingEdge = new ConstantLattice(false,true,empty);
+	_incomingEdge = new Lattice< map<string,ConstantInt*> >(false,true,empty);
 	*_incomingEdge = *incoming;
-	_outgoingEdge = new ConstantLattice(false,true,empty);
-	_outgoingTrueEdge = new ConstantLattice(false,true,empty);
-	_outgoingFalseEdge = new ConstantLattice(false,true,empty);
+	_outgoingEdge = new Lattice< map<string,ConstantInt*> >(false,true,empty);
+	_outgoingTrueEdge = new Lattice< map<string,ConstantInt*> >(false,true,empty);
+	_outgoingFalseEdge = new Lattice< map<string,ConstantInt*> >(false,true,empty);
 	if(BranchInst::classof(_instruction)) {
 		BranchInst * branchInst = (BranchInst *)_instruction;
 		if (branchInst->isConditional()) 
@@ -46,11 +46,11 @@ Instruction * ConstantPropAnalysis::getInstruction() {
     return _instruction;
 }
 
-ConstantLattice * ConstantPropAnalysis::getOutgoingEdge() {
+Lattice< map<string,ConstantInt*> > * ConstantPropAnalysis::getOutgoingEdge() {
     return _outgoingEdge;
 }
 
-ConstantLattice * ConstantPropAnalysis::getOutgoingEdge(BasicBlock * toSuccessor) {
+Lattice< map<string,ConstantInt*> > * ConstantPropAnalysis::getOutgoingEdge(BasicBlock * toSuccessor) {
 	if(!_isConditionalBranch) {
 		//errs() << "[ConstantPropAnalysis::getOutgoingEdge(BasicBlock * toSuccessor)] not a conditional branch predecessor, return normal outgoing edge\n";
 		return _outgoingEdge;
@@ -70,24 +70,24 @@ ConstantLattice * ConstantPropAnalysis::getOutgoingEdge(BasicBlock * toSuccessor
 	return NULL;
 }
 
-void ConstantPropAnalysis::setIncomingEdge(ConstantLattice * incoming) {    
+void ConstantPropAnalysis::setIncomingEdge(Lattice< map<string,ConstantInt*> > * incoming) {    
     *_incomingEdge = *incoming;
 }
 
 // will be a join
-ConstantLattice * ConstantPropAnalysis::merge(ConstantLattice * edge_1, ConstantLattice * edge_2) {
+Lattice< map<string,ConstantInt*> > * ConstantPropAnalysis::merge(Lattice< map<string,ConstantInt*> > * edge_1, Lattice< map<string,ConstantInt*> > * edge_2) {
 	map<string,ConstantInt*> outgoingEdge;
 	if (edge_1->isTop() || edge_2->isTop()) {
-		return new ConstantLattice(true, false, outgoingEdge); // return Top
+		return new Lattice< map<string,ConstantInt*> >(true, false, outgoingEdge); // return Top
 	}
 	else if (edge_1->isBottom() && edge_2->isBottom()) {
-		return new ConstantLattice(false, true, outgoingEdge);
+		return new Lattice< map<string,ConstantInt*> >(false, true, outgoingEdge);
 	}
 	else if (edge_1->isBottom()) {
-		return new ConstantLattice(false, false, edge_2->getFacts());
+		return new Lattice< map<string,ConstantInt*> >(false, false, edge_2->getFacts());
 	}
 	else if (edge_2->isBottom()) {
-		return new ConstantLattice(false, false, edge_1->getFacts());
+		return new Lattice< map<string,ConstantInt*> >(false, false, edge_1->getFacts());
 	}
 	map<string, ConstantInt *> edge1 = edge_1->getFacts();
 	map<string, ConstantInt *> edge2 = edge_2->getFacts();
@@ -106,10 +106,10 @@ ConstantLattice * ConstantPropAnalysis::merge(ConstantLattice * edge_1, Constant
             outgoingEdge[i->first] = i->second;
         }
     }
-    return new ConstantLattice(false, false, outgoingEdge);
+    return new Lattice< map<string,ConstantInt*> >(false, false, outgoingEdge);
 }
 
-bool ConstantPropAnalysis::equal(ConstantLattice * edge_1, ConstantLattice * edge_2) {
+bool ConstantPropAnalysis::equal(Lattice< map<string,ConstantInt*> > * edge_1, Lattice< map<string,ConstantInt*> > * edge_2) {
 	if(edge_1->isTop() && edge_2->isTop()) 
 		return true;
 	else if(edge_1->isBottom() && edge_2->isBottom())

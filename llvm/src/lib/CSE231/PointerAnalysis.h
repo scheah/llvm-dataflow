@@ -1,4 +1,4 @@
-#include "PointerLattice.h"
+#include "Lattice.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Value.h"
 
@@ -9,23 +9,23 @@ using namespace std;
 class PointerAnalysis {
 public:
     Instruction * getInstruction();
-    PointerLattice< map<string, set<Value*,valueComp> > > * getOutgoingEdge();
-	PointerLattice< map<string, set<Value*,valueComp> > > * getOutgoingEdge(BasicBlock * toSuccessor);
-    void setIncomingEdge(PointerLattice< map<string, set<Value*,valueComp> > > * incoming);
+    Lattice< map<string, set<Value*,valueComp> > > * getOutgoingEdge();
+	Lattice< map<string, set<Value*,valueComp> > > * getOutgoingEdge(BasicBlock * toSuccessor);
+    void setIncomingEdge(Lattice< map<string, set<Value*,valueComp> > > * incoming);
 	bool isConditionalBranch();
     void applyFlowFunction();
     void dump();
     
-    static bool equal(PointerLattice< map<string, set<Value*,valueComp> > > * edge1, PointerLattice< map<string, set<Value*,valueComp> > > * edge2);
+    static bool equal(Lattice< map<string, set<Value*,valueComp> > > * edge1, Lattice< map<string, set<Value*,valueComp> > > * edge2);
 
 protected:
-	PointerAnalysis(Instruction * inst, PointerLattice< map<string, set<Value*,valueComp> > > * incoming);
+	PointerAnalysis(Instruction * inst, Lattice< map<string, set<Value*,valueComp> > > * incoming);
 
 	Instruction * _instruction;
-	PointerLattice< map<string, set<Value*,valueComp> > > * _incomingEdge;
-	PointerLattice< map<string, set<Value*,valueComp> > > * _outgoingEdge;
-	PointerLattice< map<string, set<Value*,valueComp> > > * _outgoingTrueEdge;
-	PointerLattice< map<string, set<Value*,valueComp> > > * _outgoingFalseEdge;
+	Lattice< map<string, set<Value*,valueComp> > > * _incomingEdge;
+	Lattice< map<string, set<Value*,valueComp> > > * _outgoingEdge;
+	Lattice< map<string, set<Value*,valueComp> > > * _outgoingTrueEdge;
+	Lattice< map<string, set<Value*,valueComp> > > * _outgoingFalseEdge;
 	bool _isConditionalBranch;
     void handleStoreInst(StoreInst * storeInst);
     void handleLoadInst(LoadInst * loadInst);
@@ -33,15 +33,15 @@ protected:
 
 class MustPointerAnalysis : public PointerAnalysis {
 public:
-	MustPointerAnalysis(Instruction * inst, PointerLattice< map<string, set<Value*,valueComp> > > * incoming);
+	MustPointerAnalysis(Instruction * inst, Lattice< map<string, set<Value*,valueComp> > > * incoming);
     
-    static PointerLattice< map<string, set<Value*,valueComp> > > * merge(PointerLattice< map<string, set<Value*,valueComp> > > * edge_1, PointerLattice< map<string, set<Value*,valueComp> > > * edge_2);
+    static Lattice< map<string, set<Value*,valueComp> > > * merge(Lattice< map<string, set<Value*,valueComp> > > * edge_1, Lattice< map<string, set<Value*,valueComp> > > * edge_2);
 };
 
 class MayPointerAnalysis : public PointerAnalysis {
 public:
-	MayPointerAnalysis(Instruction * inst, PointerLattice< map<string, set<Value*,valueComp> > > * incoming);
+	MayPointerAnalysis(Instruction * inst, Lattice< map<string, set<Value*,valueComp> > > * incoming);
     
-    static PointerLattice< map<string, set<Value*,valueComp> > > * merge(PointerLattice< map<string, set<Value*,valueComp> > > * edge_1, PointerLattice< map<string, set<Value*,valueComp> > > * edge_2);
+    static Lattice< map<string, set<Value*,valueComp> > > * merge(Lattice< map<string, set<Value*,valueComp> > > * edge_1, Lattice< map<string, set<Value*,valueComp> > > * edge_2);
 };
 

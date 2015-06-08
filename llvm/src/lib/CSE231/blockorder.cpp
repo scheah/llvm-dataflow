@@ -46,7 +46,7 @@ namespace {
 				errs().write_escaped(B->getName()) << "\n";
 				
 				// check predecessors to perform merge
-				vector< ConstantLattice* > predecessorEdges;
+				vector< Lattice< map<string,ConstantInt*> >* > predecessorEdges;
 				errs() << "\tPredecessors:\n";
 				for (pred_iterator PI = pred_begin(B); PI != pred_end(B); ++PI) {
   					BasicBlock *pred = *PI;
@@ -55,20 +55,20 @@ namespace {
 					errs() << "\n";
 					// get final instruction's outgoing edge from each predecessor block
 					if (!blockInstAnalysis[pred->getName()].empty()) {// some predecessors have not been visited (a loop edge from a future block)
-						ConstantLattice * predecessorOutgoingEdge = blockInstAnalysis[pred->getName()].back()->getOutgoingEdge( &(*B) );
+						Lattice< map<string,ConstantInt*> > * predecessorOutgoingEdge = blockInstAnalysis[pred->getName()].back()->getOutgoingEdge( &(*B) );
 						predecessorEdges.push_back(predecessorOutgoingEdge);
 						predecessorOutgoingEdge->dump();
 					}
 					else {
 						errs() << "\t\t\tNo incoming edge from this, pushing bottom (full set)\n";
 						map<string,ConstantInt*> empty;
-						predecessorEdges.push_back(new ConstantLattice(false,true,empty)); //mem leak here
+						predecessorEdges.push_back(new Lattice< map<string,ConstantInt*> >(false,true,empty)); //mem leak here
 					}
 				}
 				// perform mergings	
 				// if no predecessors: incomingEdge will be bottom
 				map<string,ConstantInt*> empty;		
-				ConstantLattice * incomingEdge = new ConstantLattice(false,true,empty);
+				Lattice< map<string,ConstantInt*> > * incomingEdge = new Lattice< map<string,ConstantInt*> >(false,true,empty);
 				if (predecessorEdges.size() == 1)
 					incomingEdge = predecessorEdges.front();
                 else if (predecessorEdges.size() >= 2) {
@@ -128,7 +128,7 @@ namespace {
 					errs() << "Begin !!!LOOP!!! block with name: ";
 					errs().write_escaped(currentBlock->getName()) << "\n";
 					// check predecessors to perform merge
-					vector< ConstantLattice * > predecessorEdges;
+					vector< Lattice< map<string,ConstantInt*> > * > predecessorEdges;
 					errs() << "\tPredecessors:\n";
 					for (pred_iterator PI = pred_begin(currentBlock); PI != pred_end(currentBlock); ++PI) {
 						BasicBlock *pred = *PI;
@@ -137,18 +137,18 @@ namespace {
 						errs() << "\n";
 						// get final instruction's outgoing edge from each predecessor block
 						if (!blockInstAnalysis[pred->getName()].empty()) {// some predecessors have not been visited (a loop edge from a future block)
-							ConstantLattice * predecessorOutgoingEdge = blockInstAnalysis[pred->getName()].back()->getOutgoingEdge( currentBlock );
+							Lattice< map<string,ConstantInt*> > * predecessorOutgoingEdge = blockInstAnalysis[pred->getName()].back()->getOutgoingEdge( currentBlock );
 							predecessorEdges.push_back(predecessorOutgoingEdge);
 							predecessorOutgoingEdge->dump();
 						}
 						else {
 							errs() << "\t\t\tNo incoming edge from this, pushing bottom (full set)\n";
 							map<string,ConstantInt*> empty;
-							predecessorEdges.push_back(new ConstantLattice(false,true,empty)); //mem leak here
+							predecessorEdges.push_back(new Lattice< map<string,ConstantInt*> >(false,true,empty)); //mem leak here
 						}
 					}
 					// perform mergings			
-					ConstantLattice * incomingEdge;
+					Lattice< map<string,ConstantInt*> > * incomingEdge;
 					if (predecessorEdges.size() == 1)
 						incomingEdge = predecessorEdges.front();
 					else if (predecessorEdges.size() >= 2) {
@@ -164,7 +164,7 @@ namespace {
 					for (unsigned int j = 0; j < blockInstAnalysis[currentBlock->getName()].size(); j++) { 
 						errs() << "\t\t";
 						ConstantPropAnalysis * analysis = blockInstAnalysis[currentBlock->getName()][j];
-						ConstantLattice * originalOut = analysis->getOutgoingEdge();
+						Lattice< map<string,ConstantInt*> > * originalOut = analysis->getOutgoingEdge();
 						analysis->setIncomingEdge(incomingEdge);
 						analysis->applyFlowFunction();
 						analysis->getInstruction()->dump();
