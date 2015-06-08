@@ -12,21 +12,21 @@
 using namespace llvm;
 using namespace std;
 
-class MustPointerLattice {
+class PointerLattice {
 public:
-	MustPointerLattice();
-	MustPointerLattice(bool isTop, bool isBottom, map<string, Value*> facts);
-	MustPointerLattice(MustPointerLattice& other);
-	MustPointerLattice& operator=(const MustPointerLattice& other);
-	~MustPointerLattice();
-	map<string, Value*> getFacts();
-	void setNewFacts(bool isTop, bool isBottom, map<string, Value*> facts);
+	PointerLattice();
+	PointerLattice(bool isTop, bool isBottom, map<string, vector<Value*> > facts);
+	PointerLattice(PointerLattice& other);
+	PointerLattice& operator=(const PointerLattice& other);
+	~PointerLattice();
+	map<string, vector<Value*> > getFacts();
+	void setNewFacts(bool isTop, bool isBottom, map<string, vector<Value*> > facts);
 	bool isTop();
 	bool isBottom();
     void dump();
 
 private:
-	map<string, Value*> _facts;
+	map<string, vector<Value*> > _facts;
 	bool _isTop;
 	bool _isBottom;
 

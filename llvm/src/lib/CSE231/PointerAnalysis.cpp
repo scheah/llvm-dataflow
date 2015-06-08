@@ -1,14 +1,14 @@
-#include "MustPointerAnalysis.h"
+#include "PointerAnalysis.h"
 #include "llvm/Support/raw_ostream.h"
 
-MustPointerAnalysis::MustPointerAnalysis(Instruction * inst, MustPointerLattice * incoming) {
+PointerAnalysis::PointerAnalysis(Instruction * inst, PointerLattice * incoming) {
 	_instruction = inst;
-	map<string,Value*> empty;
-	_incomingEdge = new MustPointerLattice(false,true,empty);
+	map<string,vector<Value*> > empty;
+	_incomingEdge = new PointerLattice(false,true,empty);
 	*_incomingEdge = *incoming;
-	_outgoingEdge = new MustPointerLattice(false,true,empty);
-	_outgoingTrueEdge = new MustPointerLattice(false,true,empty);
-	_outgoingFalseEdge = new MustPointerLattice(false,true,empty);
+	_outgoingEdge = new PointerLattice(false,true,empty);
+	_outgoingTrueEdge = new PointerLattice(false,true,empty);
+	_outgoingFalseEdge = new PointerLattice(false,true,empty);
 	if(BranchInst::classof(_instruction)) {
 		BranchInst * branchInst = (BranchInst *)_instruction;
 		if (branchInst->isConditional()) 
@@ -20,11 +20,11 @@ MustPointerAnalysis::MustPointerAnalysis(Instruction * inst, MustPointerLattice 
 		_isConditionalBranch = false;
 }
 
-bool MustPointerAnalysis::isConditionalBranch() {
+bool PointerAnalysis::isConditionalBranch() {
 	return _isConditionalBranch;
 }
 
-void MustPointerAnalysis::applyFlowFunction() {
+void PointerAnalysis::applyFlowFunction() {
     if (StoreInst::classof(_instruction)) {
         handleStoreInst((StoreInst *) _instruction);
     }
@@ -36,17 +36,17 @@ void MustPointerAnalysis::applyFlowFunction() {
 	}
 }
 
-Instruction * MustPointerAnalysis::getInstruction() {
+Instruction * PointerAnalysis::getInstruction() {
     return _instruction;
 }
 
-MustPointerLattice * MustPointerAnalysis::getOutgoingEdge() {
+PointerLattice * PointerAnalysis::getOutgoingEdge() {
     return _outgoingEdge;
 }
 
-MustPointerLattice * MustPointerAnalysis::getOutgoingEdge(BasicBlock * toSuccessor) {
+PointerLattice * PointerAnalysis::getOutgoingEdge(BasicBlock * toSuccessor) {
 	if(!_isConditionalBranch) {
-		//errs() << "[MustPointerAnalysis::getOutgoingEdge(BasicBlock * toSuccessor)] not a conditional branch predecessor, return normal outgoing edge\n";
+		//errs() << "[PointerAnalysis::getOutgoingEdge(BasicBlock * toSuccessor)] not a conditional branch predecessor, return normal outgoing edge\n";
 		return _outgoingEdge;
 	}
 	BranchInst * branchInst = (BranchInst * )_instruction;
@@ -59,36 +59,36 @@ MustPointerLattice * MustPointerAnalysis::getOutgoingEdge(BasicBlock * toSuccess
 		return _outgoingFalseEdge;
 	}
 	else {
-		errs() << "[MustPointerAnalysis::getOutgoingEdge(BasicBlock * toSuccessor)] the world is weird.\n";
+		errs() << "[PointerAnalysis::getOutgoingEdge(BasicBlock * toSuccessor)] the world is weird.\n";
 	}
 	return NULL;
 }
 
-void MustPointerAnalysis::setIncomingEdge(MustPointerLattice * incoming) {    
+void PointerAnalysis::setIncomingEdge(PointerLattice * incoming) {    
     *_incomingEdge = *incoming;
 }
 
 // will be a join
-MustPointerLattice * MustPointerAnalysis::merge(MustPointerLattice * edge_1, MustPointerLattice * edge_2) {
-	map<string,Value*> outgoingEdge;
+PointerLattice * MustPointerAnalysis::merge(PointerLattice * edge_1, PointerLattice * edge_2) {
+	map<string,vector<Value*> > outgoingEdge;
 	if (edge_1->isTop() || edge_2->isTop()) {
-		return new MustPointerLattice(true, false, outgoingEdge); // return Top
+		return new PointerLattice(true, false, outgoingEdge); // return Top
 	}
 	else if (edge_1->isBottom() && edge_2->isBottom()) {
-		return new MustPointerLattice(false, true, outgoingEdge);
+		return new PointerLattice(false, true, outgoingEdge);
 	}
 	else if (edge_1->isBottom()) {
-		return new MustPointerLattice(false, false, edge_2->getFacts());
+		return new PointerLattice(false, false, edge_2->getFacts());
 	}
 	else if (edge_2->isBottom()) {
-		return new MustPointerLattice(false, false, edge_1->getFacts());
+		return new PointerLattice(false, false, edge_1->getFacts());
 	}
 
-	map<string, Value *> edge1 = edge_1->getFacts();
-	map<string, Value *> edge2 = edge_2->getFacts();
+	map<string, vector<Value*> > edge1 = edge_1->getFacts();
+	map<string, vector<Value*> > edge2 = edge_2->getFacts();
 	
-    for (map<string, Value *>::iterator i = edge1.begin(); i != edge1.end(); i++) {
-        for (map<string, Value *>::iterator j = edge2.begin(); j != edge2.end(); j++) {
+    for (map<string, vector<Value*> >::iterator i = edge1.begin(); i != edge1.end(); i++) {
+        for (map<string, vector<Value*> >::iterator j = edge2.begin(); j != edge2.end(); j++) {
             // If item is in both edges and are equal, add to outgoing edge
             if ( (i->first == j->first) && (i->second == j->second) ) {
                 outgoingEdge[i->first] = i->second;
@@ -97,19 +97,19 @@ MustPointerLattice * MustPointerAnalysis::merge(MustPointerLattice * edge_1, Mus
         }
     }
 
-    return new MustPointerLattice(false, false, outgoingEdge);
+    return new PointerLattice(false, false, outgoingEdge);
 }
 
-bool MustPointerAnalysis::equal(MustPointerLattice * edge_1, MustPointerLattice * edge_2) {
+bool PointerAnalysis::equal(PointerLattice * edge_1, PointerLattice * edge_2) {
 	if(edge_1->isTop() && edge_2->isTop()) 
 		return true;
 	else if(edge_1->isBottom() && edge_2->isBottom())
 		return true;
-	map<string, Value *> edge1 = edge_1->getFacts();
-	map<string, Value *> edge2 = edge_2->getFacts();
+	map<string,vector<Value*> > edge1 = edge_1->getFacts();
+	map<string,vector<Value*> > edge2 = edge_2->getFacts();
     if(edge1.size() != edge2.size())
         return false;
-    for (map<string, Value *>::iterator i = edge1.begin(); i != edge1.end(); i++) {
+    for (map<string,vector<Value*> >::iterator i = edge1.begin(); i != edge1.end(); i++) {
         if (edge1[i->first] != edge2[i->first])
             return false;
     }
@@ -117,7 +117,7 @@ bool MustPointerAnalysis::equal(MustPointerLattice * edge_1, MustPointerLattice 
     return true;
 }
 
-void MustPointerAnalysis::dump() {
+void PointerAnalysis::dump() {
     errs() << "\t\t\tINCOMING:\n";
     _incomingEdge->dump();
 
@@ -134,29 +134,34 @@ void MustPointerAnalysis::dump() {
     errs() << "\t\t--------------------------------------------------------\n";
 }
 
-void MustPointerAnalysis::handleStoreInst(StoreInst * storeInst) {
+void PointerAnalysis::handleStoreInst(StoreInst * storeInst) {
 	string name = storeInst->getPointerOperand()->getName().str();
-	map<string, Value *> edgeMap = _incomingEdge->getFacts(); 
+	map<string,vector<Value*> > edgeMap = _incomingEdge->getFacts(); 
 	edgeMap.erase(name);
 
     const Type* type = storeInst->getPointerOperand()->getType();
 
     if (type->isPointerTy() && type->getContainedType(0)->isPointerTy()) {
-        edgeMap[name] = storeInst->getValueOperand();
+        edgeMap[name].clear();
+        edgeMap[name].push_back(storeInst->getValueOperand());
     }
 
     _outgoingEdge->setNewFacts(false,false,edgeMap);
 }
 
-void MustPointerAnalysis::handleLoadInst(LoadInst * loadInst) {
-    map<string, Value *> edgeMap = _incomingEdge->getFacts();
+void PointerAnalysis::handleLoadInst(LoadInst * loadInst) {
+    map<string,vector<Value*> > edgeMap = _incomingEdge->getFacts();
 	edgeMap.erase(loadInst->getOperandUse(0).getUser()->getName().str());
 	
     const Type* type = loadInst->getOperand(0)->getType();
     if (type->isPointerTy() && type->getContainedType(0)->isPointerTy()) {
-        edgeMap[loadInst->getOperandUse(0).getUser()->getName().str()] = loadInst->getOperand(0);
+        edgeMap[loadInst->getOperandUse(0).getUser()->getName().str()].clear();
+        edgeMap[loadInst->getOperandUse(0).getUser()->getName().str()].push_back(loadInst->getOperand(0));
     }
     
     _outgoingEdge->setNewFacts(false,false,edgeMap);
+}
+
+MustPointerAnalysis::MustPointerAnalysis(Instruction * inst, PointerLattice * incoming) : PointerAnalysis(inst, incoming) {
 }
 

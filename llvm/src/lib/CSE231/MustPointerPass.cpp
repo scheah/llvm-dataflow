@@ -21,7 +21,7 @@
 
 #include <llvm/ADT/StringRef.h>
 #include "llvm/Support/CFG.h"
-#include "MustPointerAnalysis.h"
+#include "PointerAnalysis.h"
 
 #include <stdio.h>
 
@@ -46,7 +46,7 @@ namespace {
 				errs().write_escaped(B->getName()) << "\n";
 				
 				// check predecessors to perform merge
-				vector< MustPointerLattice* > predecessorEdges;
+				vector< PointerLattice* > predecessorEdges;
 				errs() << "\tPredecessors:\n";
 				for (pred_iterator PI = pred_begin(B); PI != pred_end(B); ++PI) {
   					BasicBlock *pred = *PI;
@@ -55,20 +55,20 @@ namespace {
 					errs() << "\n";
 					// get final instruction's outgoing edge from each predecessor block
 					if (!blockInstAnalysis[pred->getName()].empty()) {// some predecessors have not been visited (a loop edge from a future block)
-						MustPointerLattice * predecessorOutgoingEdge = blockInstAnalysis[pred->getName()].back()->getOutgoingEdge( &(*B) );
+						PointerLattice * predecessorOutgoingEdge = blockInstAnalysis[pred->getName()].back()->getOutgoingEdge( &(*B) );
 						predecessorEdges.push_back(predecessorOutgoingEdge);
 						predecessorOutgoingEdge->dump();
 					}
 					else {
 						errs() << "\t\t\tNo incoming edge from this, pushing bottom (full set)\n";
-						map<string,Value*> empty;
-						predecessorEdges.push_back(new MustPointerLattice(false,true,empty)); //mem leak here
+						map<string,vector<Value*> > empty;
+						predecessorEdges.push_back(new PointerLattice(false,true,empty)); //mem leak here
 					}
 				}
 				// perform mergings	
 				// if no predecessors: incomingEdge will be bottom
-				map<string,Value*> empty;		
-				MustPointerLattice * incomingEdge = new MustPointerLattice(false,true,empty);
+				map<string,vector<Value*> > empty;		
+				PointerLattice * incomingEdge = new PointerLattice(false,true,empty);
 				if (predecessorEdges.size() == 1)
 					incomingEdge = predecessorEdges.front();
                 else if (predecessorEdges.size() >= 2) {
@@ -128,7 +128,7 @@ namespace {
 					errs() << "Begin !!!LOOP!!! block with name: ";
 					errs().write_escaped(currentBlock->getName()) << "\n";
 					// check predecessors to perform merge
-					vector< MustPointerLattice * > predecessorEdges;
+					vector< PointerLattice * > predecessorEdges;
 					errs() << "\tPredecessors:\n";
 					for (pred_iterator PI = pred_begin(currentBlock); PI != pred_end(currentBlock); ++PI) {
 						BasicBlock *pred = *PI;
@@ -137,18 +137,18 @@ namespace {
 						errs() << "\n";
 						// get final instruction's outgoing edge from each predecessor block
 						if (!blockInstAnalysis[pred->getName()].empty()) {// some predecessors have not been visited (a loop edge from a future block)
-							MustPointerLattice * predecessorOutgoingEdge = blockInstAnalysis[pred->getName()].back()->getOutgoingEdge( currentBlock );
+							PointerLattice * predecessorOutgoingEdge = blockInstAnalysis[pred->getName()].back()->getOutgoingEdge( currentBlock );
 							predecessorEdges.push_back(predecessorOutgoingEdge);
 							predecessorOutgoingEdge->dump();
 						}
 						else {
 							errs() << "\t\t\tNo incoming edge from this, pushing bottom (full set)\n";
-							map<string,Value*> empty;
-							predecessorEdges.push_back(new MustPointerLattice(false,true,empty)); //mem leak here
+							map<string,vector<Value*> > empty;
+							predecessorEdges.push_back(new PointerLattice(false,true,empty)); //mem leak here
 						}
 					}
 					// perform mergings			
-					MustPointerLattice * incomingEdge;
+					PointerLattice * incomingEdge;
 					if (predecessorEdges.size() == 1)
 						incomingEdge = predecessorEdges.front();
 					else if (predecessorEdges.size() >= 2) {
@@ -164,7 +164,7 @@ namespace {
 					for (unsigned int j = 0; j < blockInstAnalysis[currentBlock->getName()].size(); j++) { 
 						errs() << "\t\t";
 						MustPointerAnalysis * analysis = blockInstAnalysis[currentBlock->getName()][j];
-						MustPointerLattice * originalOut = analysis->getOutgoingEdge();
+						PointerLattice * originalOut = analysis->getOutgoingEdge();
 						analysis->setIncomingEdge(incomingEdge);
 						analysis->applyFlowFunction();
 						analysis->getInstruction()->dump();
