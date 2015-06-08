@@ -33,7 +33,7 @@ namespace {
 		static char ID; // Pass identification, replacement for typeid
 		vector<BasicBlock*> blockOrder; // for use in remembering order of traversed blocks
 
-		map<StringRef, vector<MustPointerAnalysis *> > blockInstAnalysis; //for use propagating dataflow facts
+		map<StringRef, vector<MayPointerAnalysis *> > blockInstAnalysis; //for use propagating dataflow facts
 
 		BlockOrder() : FunctionPass(ID) {}
 
@@ -72,9 +72,9 @@ namespace {
 				if (predecessorEdges.size() == 1)
 					incomingEdge = predecessorEdges.front();
                 else if (predecessorEdges.size() >= 2) {
-                    incomingEdge = MustPointerAnalysis::merge(predecessorEdges[0], predecessorEdges[1]);
+                    incomingEdge = MayPointerAnalysis::merge(predecessorEdges[0], predecessorEdges[1]);
                     for (unsigned int i = 2; i < predecessorEdges.size(); i++) {
-                        incomingEdge = MustPointerAnalysis::merge(incomingEdge, predecessorEdges[2]);
+                        incomingEdge = MayPointerAnalysis::merge(incomingEdge, predecessorEdges[2]);
                     }
                 }
 
@@ -86,7 +86,7 @@ namespace {
 				errs() << "\tInstructions:\n";
 				for (BasicBlock::iterator I = B->begin(); I != B->end(); ++I) { 
 					errs() << "\t\t";
-                    MustPointerAnalysis * analysis = new MustPointerAnalysis(&(*I), incomingEdge);
+                    MayPointerAnalysis * analysis = new MayPointerAnalysis(&(*I), incomingEdge);
 					blockInstAnalysis[B->getName()].push_back(analysis);
 					analysis->applyFlowFunction();
                    	I->dump();
@@ -152,9 +152,9 @@ namespace {
 					if (predecessorEdges.size() == 1)
 						incomingEdge = predecessorEdges.front();
 					else if (predecessorEdges.size() >= 2) {
-						incomingEdge = MustPointerAnalysis::merge(predecessorEdges[0], predecessorEdges[1]);
+						incomingEdge = MayPointerAnalysis::merge(predecessorEdges[0], predecessorEdges[1]);
 						for (unsigned int i = 2; i < predecessorEdges.size(); i++) {
-							incomingEdge = MustPointerAnalysis::merge(incomingEdge, predecessorEdges[2]);
+							incomingEdge = MayPointerAnalysis::merge(incomingEdge, predecessorEdges[2]);
 						}
 					}
 					// record block visit
@@ -163,13 +163,13 @@ namespace {
 					errs() << "\tInstructions:\n";
 					for (unsigned int j = 0; j < blockInstAnalysis[currentBlock->getName()].size(); j++) { 
 						errs() << "\t\t";
-						MustPointerAnalysis * analysis = blockInstAnalysis[currentBlock->getName()][j];
+						MayPointerAnalysis * analysis = blockInstAnalysis[currentBlock->getName()][j];
 						PointerLattice * originalOut = analysis->getOutgoingEdge();
 						analysis->setIncomingEdge(incomingEdge);
 						analysis->applyFlowFunction();
 						analysis->getInstruction()->dump();
 						analysis->dump();
-						if(MustPointerAnalysis::equal(originalOut, analysis->getOutgoingEdge())) {
+						if(MayPointerAnalysis::equal(originalOut, analysis->getOutgoingEdge())) {
 							errs() << "Encountered fixed dataflow fact --- !!!ENDING LOOP!!!\n";
 							return; //we are done
 						}
@@ -199,5 +199,5 @@ namespace {
 }
 
 char BlockOrder::ID = 0;
-static RegisterPass<BlockOrder> X("must_pointer", "Must Pointer Pass");
+static RegisterPass<BlockOrder> X("may_pointer", "May Pointer Pass");
 

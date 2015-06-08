@@ -2,7 +2,7 @@
 
 PointerLattice::PointerLattice() {}
 
-PointerLattice::PointerLattice(bool isTop, bool isBottom, map<string, vector<Value*> > facts) {
+PointerLattice::PointerLattice(bool isTop, bool isBottom, map<string, set<Value*,valueComp> > facts) {
 	// Must Analysis, bottom is Full set, top is empty set
 	_facts = facts;
 	_isTop = isTop;
@@ -24,11 +24,11 @@ PointerLattice& PointerLattice::operator=( const PointerLattice& other ) {
 
 PointerLattice::~PointerLattice() {}
 
-map<string, vector<Value*> > PointerLattice::getFacts() {
+map<string, set<Value*,valueComp> > PointerLattice::getFacts() {
 	return _facts; //returns a copy
 }
 
-void PointerLattice::setNewFacts(bool isTop, bool isBottom, map<string, vector<Value*> > facts) {
+void PointerLattice::setNewFacts(bool isTop, bool isBottom, map<string, set<Value*,valueComp> > facts) {
 	_facts = facts;
 	_isTop = isTop;
 	_isBottom = isBottom;
@@ -50,13 +50,22 @@ void PointerLattice::dump() {
         errs() << "\t\t\tis Bottom\n";
     }
     else {
-        for (map<string, vector<Value*> >::iterator i = _facts.begin(); i != _facts.end(); i++) {
+        for (map<string, set<Value*,valueComp> >::iterator i = _facts.begin(); i != _facts.end(); i++) {
             errs() << "\t\t\t\t" << i->first << " -> "; //<< i->second->getName() << "\n";
 
-            for (unsigned int j = 0; j < i->second.size(); j++) {
-                errs() << i->second[j]->getName();
+            //for (unsigned int j = 0; j < i->second.size(); j++) {
+            /*for (set<Value*,valueComp>::iterator j = i->second.begin(); j != i->second.end(); j++) {
+                errs() << (*j)->getName().str();
 
-                if (j != i->second.size() - 1) {
+                if (j + 1 == i->second.end())
+                    errs() << ",";
+            }*/
+
+            set<Value*,valueComp>::iterator j = i->second.begin();
+            while(j != i->second.end()) {
+                errs() << (*j)->getName().str();
+            
+                if (++j != i->second.end()) {
                     errs() << ",";
                 }
             }

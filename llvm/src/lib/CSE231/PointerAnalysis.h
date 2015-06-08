@@ -6,6 +6,14 @@
 using namespace llvm;
 using namespace std;
 
+/*
+struct valueComp {
+    bool operator()(Value* const a, Value* const b) {
+        return a->getName() < b->getName();
+    }
+}
+*/
+
 class PointerAnalysis {
 public:
     Instruction * getInstruction();
@@ -38,12 +46,10 @@ public:
     static PointerLattice * merge(PointerLattice * edge_1, PointerLattice * edge_2);
 };
 
-/*
 class MayPointerAnalysis : public PointerAnalysis {
 public:
-	PointerAnalysis(Instruction * inst, PointerLattice * incoming);
+	MayPointerAnalysis(Instruction * inst, PointerLattice * incoming);
     
     static PointerLattice * merge(PointerLattice * edge_1, PointerLattice * edge_2);
 };
-*/
 

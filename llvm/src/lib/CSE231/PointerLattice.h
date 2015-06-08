@@ -6,27 +6,34 @@
 #include "llvm/Support/InstIterator.h"
 #include "llvm/Support/raw_ostream.h"
 
+#include <set>
 #include <map>
 #include <string>
 
 using namespace llvm;
 using namespace std;
+    
+struct valueComp {
+    bool operator()(Value* const a, Value* const b) {
+        return a->getName() < b->getName();
+    }
+};
 
 class PointerLattice {
 public:
 	PointerLattice();
-	PointerLattice(bool isTop, bool isBottom, map<string, vector<Value*> > facts);
+	PointerLattice(bool isTop, bool isBottom, map<string, set<Value*,valueComp> > facts);
 	PointerLattice(PointerLattice& other);
 	PointerLattice& operator=(const PointerLattice& other);
 	~PointerLattice();
-	map<string, vector<Value*> > getFacts();
-	void setNewFacts(bool isTop, bool isBottom, map<string, vector<Value*> > facts);
+	map<string, set<Value*,valueComp> > getFacts();
+	void setNewFacts(bool isTop, bool isBottom, map<string, set<Value*,valueComp> > facts);
 	bool isTop();
 	bool isBottom();
     void dump();
 
 private:
-	map<string, vector<Value*> > _facts;
+	map<string, set<Value*,valueComp> > _facts;
 	bool _isTop;
 	bool _isBottom;
 
