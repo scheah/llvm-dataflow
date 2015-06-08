@@ -16,7 +16,8 @@ public:
 	bool isConditionalBranch();
     void applyFlowFunction();
     void dump();
-    
+    static void dump(Lattice<map<string,ConstantInt*> > * lattice);
+
     static Lattice< map<string,ConstantInt*> > * merge(Lattice< map<string,ConstantInt*> > * edge_1, Lattice< map<string,ConstantInt*> > * edge_2);
     static bool equal(Lattice< map<string,ConstantInt*> > * edge1, Lattice< map<string,ConstantInt*> > * edge2);
 

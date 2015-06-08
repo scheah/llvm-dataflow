@@ -2,14 +2,14 @@
 #include "llvm/Support/raw_ostream.h"
 
 
-RangeAnalysis::RangeAnalysis(Instruction * inst, RangeLattice * incoming) {
+RangeAnalysis::RangeAnalysis(Instruction * inst, Lattice< map<string,vector<int> > > * incoming) {
 	_instruction = inst;
 	map<string, vector<int> > empty;
-	_incomingEdge = new RangeLattice(false,true,empty);
+	_incomingEdge = new Lattice< map<string,vector<int> > >(false,true,empty);
 	*_incomingEdge = *incoming;
-	_outgoingEdge = new RangeLattice(false,true,empty);
-	_outgoingTrueEdge = new RangeLattice(false,true,empty);
-	_outgoingFalseEdge = new RangeLattice(false,true,empty);
+	_outgoingEdge = new Lattice< map<string,vector<int> > >(false,true,empty);
+	_outgoingTrueEdge = new Lattice< map<string,vector<int> > >(false,true,empty);
+	_outgoingFalseEdge = new Lattice< map<string,vector<int> > >(false,true,empty);
 	if(BranchInst::classof(_instruction)) {
 		BranchInst * branchInst = (BranchInst *)_instruction;
 		if (branchInst->isConditional()) 
@@ -50,11 +50,11 @@ Instruction * RangeAnalysis::getInstruction() {
     return _instruction;
 }
 
-RangeLattice * RangeAnalysis::getOutgoingEdge() {
+Lattice< map<string,vector<int> > > * RangeAnalysis::getOutgoingEdge() {
     return _outgoingEdge;
 }
 
-RangeLattice * RangeAnalysis::getOutgoingEdge(BasicBlock * toSuccessor) {
+Lattice< map<string,vector<int> > > * RangeAnalysis::getOutgoingEdge(BasicBlock * toSuccessor) {
 	if(!_isConditionalBranch) {
 		//errs() << "[RangeAnalysis::getOutgoingEdge(BasicBlock * toSuccessor)] not a conditional branch predecessor, return normal outgoing edge\n";
 		return _outgoingEdge;
@@ -75,18 +75,18 @@ RangeLattice * RangeAnalysis::getOutgoingEdge(BasicBlock * toSuccessor) {
 }
 
 
-void RangeAnalysis::setIncomingEdge(RangeLattice * incoming) {    
+void RangeAnalysis::setIncomingEdge(Lattice< map<string,vector<int> > > * incoming) {    
     *_incomingEdge = *incoming;
 }
 
 // will be a join
-RangeLattice * RangeAnalysis::join(RangeLattice * edge_1, RangeLattice * edge_2) {
+Lattice< map<string,vector<int> > > * RangeAnalysis::join(Lattice< map<string,vector<int> > > * edge_1, Lattice< map<string,vector<int> > > * edge_2) {
 	map<string, vector<int> > outgoingEdge;
 	if (edge_1->isTop() || edge_2->isTop()) {
-		return new RangeLattice(true, false, outgoingEdge); // return Top
+		return new Lattice< map<string,vector<int> > >(true, false, outgoingEdge); // return Top
 	}
 	else if (edge_1->isBottom() && edge_2->isBottom()) { // both are bottom (empty) return bottom
-		return new RangeLattice(false, true, outgoingEdge);
+		return new Lattice< map<string,vector<int> > >(false, true, outgoingEdge);
 	}
 	else if (edge_1->isBottom()) {
 		return edge_2;
@@ -119,17 +119,17 @@ RangeLattice * RangeAnalysis::join(RangeLattice * edge_1, RangeLattice * edge_2)
 	/*for (map<string, vector<int> >::iterator i = edge2.begin(); i != edge2.end(); i++) {
     	outgoingEdge[i->first] = i->second;
     }*/
-    return new RangeLattice(false, false, outgoingEdge);
+    return new Lattice< map<string,vector<int> > >(false, false, outgoingEdge);
 }
 
 // will be a meet
-RangeLattice * RangeAnalysis::merge(RangeLattice * edge_1, RangeLattice * edge_2) {
+Lattice< map<string,vector<int> > > * RangeAnalysis::merge(Lattice< map<string,vector<int> > > * edge_1, Lattice< map<string,vector<int> > > * edge_2) {
 	map<string, vector<int> > outgoingEdge;
 	if (edge_1->isTop() || edge_2->isTop()) {
-		return new RangeLattice(true, false, outgoingEdge); // return Top
+		return new Lattice< map<string,vector<int> > >(true, false, outgoingEdge); // return Top
 	}
 	else if (edge_1->isBottom() && edge_2->isBottom()) { //both are bottom (empty) return bottom
-		return new RangeLattice(false, true, outgoingEdge);
+		return new Lattice< map<string,vector<int> > >(false, true, outgoingEdge);
 	}
 	map<string, vector<int> > edge1 = edge_1->getFacts();
 	map<string, vector<int> > edge2 = edge_2->getFacts();
@@ -152,30 +152,47 @@ RangeLattice * RangeAnalysis::merge(RangeLattice * edge_1, RangeLattice * edge_2
 	for (map<string, vector<int> >::iterator i = edge2.begin(); i != edge2.end(); i++) {
     	outgoingEdge[i->first] = i->second;
     }
-    return new RangeLattice(false, false, outgoingEdge);
+    return new Lattice< map<string,vector<int> > >(false, false, outgoingEdge);
 
 }
 
-bool RangeAnalysis::equal(RangeLattice * edge_1, RangeLattice * edge_2) {
+bool RangeAnalysis::equal(Lattice< map<string,vector<int> > > * edge_1, Lattice< map<string,vector<int> > > * edge_2) {
 	return true;
 }
 
 void RangeAnalysis::dump() {
     errs() << "\t\t\tINCOMING:\n";
-    _incomingEdge->dump();
+    dump(_incomingEdge);
 
 	if (!_isConditionalBranch) {
 		errs() << "\t\t\tOUTGOING:\n";
-		_outgoingEdge->dump();
+        dump(_outgoingEdge);
     }
 	else {
 		errs() << "\t\t\tOUTGOING (TRUE):\n";
-		_outgoingTrueEdge->dump();
+        dump(_outgoingTrueEdge);
 		errs() << "\t\t\tOUTGOING (FALSE):\n";
-		_outgoingFalseEdge->dump();
+        dump(_outgoingFalseEdge);
 	}
     errs() << "\t\t--------------------------------------------------------\n";
 }
+
+void RangeAnalysis::dump(Lattice<map<string,vector<int> > > * lattice) {
+    if (lattice->isTop()) {
+        errs() << "\t\t\tis Top\n";
+    }
+    else if (lattice->isBottom()) {
+        errs() << "\t\t\tis Bottom\n";
+    }
+    else {
+        map<string,vector<int> > edge = lattice->getFacts();
+
+        for (map<string, vector<int> >::iterator i = edge.begin(); i != edge.end(); i++) {
+            errs() << "\t\t\t\t" << i->first << " -> (" << i->second[0] << ", " << i->second[1] << ")\n";
+        }
+    }
+}
+
 
 void RangeAnalysis::handleAllocaInst(AllocaInst * allocaInst) {
 	// we're gonna assume everything is an int

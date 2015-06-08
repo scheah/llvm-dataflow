@@ -57,7 +57,7 @@ namespace {
 					if (!blockInstAnalysis[pred->getName()].empty()) {// some predecessors have not been visited (a loop edge from a future block)
 						Lattice< map<string,ConstantInt*> > * predecessorOutgoingEdge = blockInstAnalysis[pred->getName()].back()->getOutgoingEdge( &(*B) );
 						predecessorEdges.push_back(predecessorOutgoingEdge);
-						predecessorOutgoingEdge->dump();
+						ConstantPropAnalysis::dump(predecessorOutgoingEdge);
 					}
 					else {
 						errs() << "\t\t\tNo incoming edge from this, pushing bottom (full set)\n";
@@ -139,7 +139,7 @@ namespace {
 						if (!blockInstAnalysis[pred->getName()].empty()) {// some predecessors have not been visited (a loop edge from a future block)
 							Lattice< map<string,ConstantInt*> > * predecessorOutgoingEdge = blockInstAnalysis[pred->getName()].back()->getOutgoingEdge( currentBlock );
 							predecessorEdges.push_back(predecessorOutgoingEdge);
-							predecessorOutgoingEdge->dump();
+							ConstantPropAnalysis::dump(predecessorOutgoingEdge);
 						}
 						else {
 							errs() << "\t\t\tNo incoming edge from this, pushing bottom (full set)\n";

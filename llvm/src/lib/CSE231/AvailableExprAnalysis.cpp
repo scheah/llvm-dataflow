@@ -80,12 +80,24 @@ bool AvailableExprAnalysis::equal(Lattice<ExpressionContainer> * edge_1, Lattice
 
 void AvailableExprAnalysis::dump() {
     errs() << "\t\t\tINCOMING:\n";
-    _incomingEdge->dump();
+    dump(_incomingEdge);
 
     errs() << "\t\t\tOUTGOING:\n";
-    _outgoingEdge->dump();
-    
+    dump(_outgoingEdge);
+
     errs() << "\t\t--------------------------------------------------------\n";
+}
+
+void AvailableExprAnalysis::dump(Lattice<ExpressionContainer> * lattice) {
+    if (lattice->isTop()) {
+        errs() << "\t\t\tis Top\n";
+    }
+    else if (lattice->isBottom()) {
+        errs() << "\t\t\tis Bottom\n";
+    }
+    else {
+        lattice->getFacts().dump();
+    }
 }
 
 void AvailableExprAnalysis::handleBinaryOp(Instruction * inst) {

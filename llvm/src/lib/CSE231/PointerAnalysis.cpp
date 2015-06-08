@@ -87,19 +87,45 @@ bool PointerAnalysis::equal(Lattice< map<string, set<Value*,valueComp> > > * edg
 
 void PointerAnalysis::dump() {
     errs() << "\t\t\tINCOMING:\n";
-    _incomingEdge->dump();
+    dump(_incomingEdge);
 
 	if (!_isConditionalBranch) {
 		errs() << "\t\t\tOUTGOING:\n";
-		_outgoingEdge->dump();
+        dump(_outgoingEdge);
     }
 	else {
 		errs() << "\t\t\tOUTGOING (TRUE):\n";
-		_outgoingTrueEdge->dump();
+        dump(_outgoingTrueEdge);
 		errs() << "\t\t\tOUTGOING (FALSE):\n";
-		_outgoingFalseEdge->dump();
+        dump(_outgoingFalseEdge);
 	}
     errs() << "\t\t--------------------------------------------------------\n";
+}
+
+void PointerAnalysis::dump(Lattice<map<string,set<Value*,valueComp> > > * lattice) {
+    if (lattice->isTop()) {
+        errs() << "\t\t\tis Top\n";
+    }
+    else if (lattice->isBottom()) {
+        errs() << "\t\t\tis Bottom\n";
+    }
+    else {
+        map<string,set<Value*,valueComp> > edge = lattice->getFacts();
+        for (map<string, set<Value*,valueComp> >::iterator i = edge.begin(); i != edge.end(); i++) {
+            errs() << "\t\t\t\t" << i->first << " -> ";
+
+            set<Value*,valueComp>::iterator j = i->second.begin();
+            while(j != i->second.end()) {
+                errs() << (*j)->getName().str();
+                                                                
+                if (++j != i->second.end()) {
+                    errs() << ",";
+                }
+
+                errs() << "\n";
+            }
+        }
+    }
 }
 
 void PointerAnalysis::handleStoreInst(StoreInst * storeInst) {

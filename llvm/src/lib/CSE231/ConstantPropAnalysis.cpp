@@ -128,19 +128,34 @@ bool ConstantPropAnalysis::equal(Lattice< map<string,ConstantInt*> > * edge_1, L
 
 void ConstantPropAnalysis::dump() {
     errs() << "\t\t\tINCOMING:\n";
-    _incomingEdge->dump();
+    dump(_incomingEdge);
 
 	if (!_isConditionalBranch) {
 		errs() << "\t\t\tOUTGOING:\n";
-		_outgoingEdge->dump();
+        dump(_outgoingEdge);
     }
 	else {
 		errs() << "\t\t\tOUTGOING (TRUE):\n";
-		_outgoingTrueEdge->dump();
+        dump(_outgoingTrueEdge);
 		errs() << "\t\t\tOUTGOING (FALSE):\n";
-		_outgoingFalseEdge->dump();
+        dump(_outgoingFalseEdge);
 	}
     errs() << "\t\t--------------------------------------------------------\n";
+}
+
+void ConstantPropAnalysis::dump(Lattice<map<string,ConstantInt*> > * lattice) {
+    if (lattice->isTop()) {
+        errs() << "\t\t\tis Top\n";
+    }
+    else if (lattice->isBottom()) {
+        errs() << "\t\t\tis Bottom\n";
+    }
+    else {
+        map<string,ConstantInt*> edge = lattice->getFacts();
+        for (map<string, ConstantInt *>::iterator i = edge.begin(); i != edge.end(); i++) {
+            errs() << "\t\t\t\t" << i->first << " -> " << i->second->getSExtValue() << "\n";
+        }
+    }
 }
 
 void ConstantPropAnalysis::handleStoreInst(StoreInst * storeInst) {

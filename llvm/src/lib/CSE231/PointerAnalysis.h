@@ -15,7 +15,8 @@ public:
 	bool isConditionalBranch();
     void applyFlowFunction();
     void dump();
-    
+    static void dump(Lattice<map<string,set<Value*,valueComp> > > * lattice);
+
     static bool equal(Lattice< map<string, set<Value*,valueComp> > > * edge1, Lattice< map<string, set<Value*,valueComp> > > * edge2);
 
 protected:

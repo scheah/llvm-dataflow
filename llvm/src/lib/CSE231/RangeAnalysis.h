@@ -1,4 +1,4 @@
-#include "RangeLattice.h"
+#include "Lattice.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Value.h"
 #include <algorithm>    // std::max and min
@@ -9,24 +9,25 @@ using namespace std;
 
 class RangeAnalysis {
 public:
-	RangeAnalysis(Instruction * inst, RangeLattice * incoming);
+	RangeAnalysis(Instruction * inst, Lattice< map<string,vector<int> > > * incoming);
     Instruction * getInstruction();
-    RangeLattice * getOutgoingEdge();
-	RangeLattice * getOutgoingEdge(BasicBlock * toSuccessor);
-    void setIncomingEdge(RangeLattice * incoming);
+    Lattice< map<string,vector<int> > > * getOutgoingEdge();
+	Lattice< map<string,vector<int> > > * getOutgoingEdge(BasicBlock * toSuccessor);
+    void setIncomingEdge(Lattice< map<string,vector<int> > > * incoming);
 	bool isConditionalBranch();
     void applyFlowFunction();
     void dump();
-    
-	static RangeLattice * join(RangeLattice * edge_1, RangeLattice * edge_2);
-    static RangeLattice * merge(RangeLattice * edge_1, RangeLattice * edge_2);		
-    static bool equal(RangeLattice * edge1, RangeLattice * edge2);
+    static void dump(Lattice<map<string,vector<int> > > * lattice);
+
+	static Lattice< map<string,vector<int> > > * join(Lattice< map<string,vector<int> > > * edge_1, Lattice< map<string,vector<int> > > * edge_2);
+    static Lattice< map<string,vector<int> > > * merge(Lattice< map<string,vector<int> > > * edge_1, Lattice< map<string,vector<int> > > * edge_2);		
+    static bool equal(Lattice< map<string,vector<int> > > * edge1, Lattice< map<string,vector<int> > > * edge2);
 private:
 	Instruction * _instruction;
-	RangeLattice * _incomingEdge;
-	RangeLattice * _outgoingEdge;
-	RangeLattice * _outgoingTrueEdge;
-	RangeLattice * _outgoingFalseEdge;
+	Lattice< map<string,vector<int> > > * _incomingEdge;
+	Lattice< map<string,vector<int> > > * _outgoingEdge;
+	Lattice< map<string,vector<int> > > * _outgoingTrueEdge;
+	Lattice< map<string,vector<int> > > * _outgoingFalseEdge;
 	bool _isConditionalBranch;
 	void handleAllocaInst(AllocaInst * allocaInst);
     void handleStoreInst(StoreInst * storeInst);
