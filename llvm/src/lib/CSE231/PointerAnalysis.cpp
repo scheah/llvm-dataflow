@@ -1,14 +1,14 @@
 #include "PointerAnalysis.h"
 #include "llvm/Support/raw_ostream.h"
 
-PointerAnalysis::PointerAnalysis(Instruction * inst, PointerLattice * incoming) {
+PointerAnalysis::PointerAnalysis(Instruction * inst, PointerLattice< map<string, set<Value*,valueComp> > > * incoming) {
 	_instruction = inst;
 	map<string,set<Value*,valueComp> > empty;
-	_incomingEdge = new PointerLattice(false,true,empty);
+	_incomingEdge = new PointerLattice< map<string, set<Value*,valueComp> > >(false,true,empty);
 	*_incomingEdge = *incoming;
-	_outgoingEdge = new PointerLattice(false,true,empty);
-	_outgoingTrueEdge = new PointerLattice(false,true,empty);
-	_outgoingFalseEdge = new PointerLattice(false,true,empty);
+	_outgoingEdge = new PointerLattice< map<string, set<Value*,valueComp> > >(false,true,empty);
+	_outgoingTrueEdge = new PointerLattice< map<string, set<Value*,valueComp> > >(false,true,empty);
+	_outgoingFalseEdge = new PointerLattice< map<string, set<Value*,valueComp> > >(false,true,empty);
 	if(BranchInst::classof(_instruction)) {
 		BranchInst * branchInst = (BranchInst *)_instruction;
 		if (branchInst->isConditional()) 
@@ -40,11 +40,11 @@ Instruction * PointerAnalysis::getInstruction() {
     return _instruction;
 }
 
-PointerLattice * PointerAnalysis::getOutgoingEdge() {
+PointerLattice< map<string, set<Value*,valueComp> > > * PointerAnalysis::getOutgoingEdge() {
     return _outgoingEdge;
 }
 
-PointerLattice * PointerAnalysis::getOutgoingEdge(BasicBlock * toSuccessor) {
+PointerLattice< map<string, set<Value*,valueComp> > > * PointerAnalysis::getOutgoingEdge(BasicBlock * toSuccessor) {
 	if(!_isConditionalBranch) {
 		//errs() << "[PointerAnalysis::getOutgoingEdge(BasicBlock * toSuccessor)] not a conditional branch predecessor, return normal outgoing edge\n";
 		return _outgoingEdge;
@@ -64,11 +64,11 @@ PointerLattice * PointerAnalysis::getOutgoingEdge(BasicBlock * toSuccessor) {
 	return NULL;
 }
 
-void PointerAnalysis::setIncomingEdge(PointerLattice * incoming) {    
+void PointerAnalysis::setIncomingEdge(PointerLattice< map<string, set<Value*,valueComp> > > * incoming) {    
     *_incomingEdge = *incoming;
 }
 
-bool PointerAnalysis::equal(PointerLattice * edge_1, PointerLattice * edge_2) {
+bool PointerAnalysis::equal(PointerLattice< map<string, set<Value*,valueComp> > > * edge_1, PointerLattice< map<string, set<Value*,valueComp> > > * edge_2) {
 	if(edge_1->isTop() && edge_2->isTop()) 
 		return true;
 	else if(edge_1->isBottom() && edge_2->isBottom())
@@ -130,22 +130,22 @@ void PointerAnalysis::handleLoadInst(LoadInst * loadInst) {
     _outgoingEdge->setNewFacts(false,false,edgeMap);
 }
 
-MustPointerAnalysis::MustPointerAnalysis(Instruction * inst, PointerLattice * incoming) : PointerAnalysis(inst, incoming) { }
+MustPointerAnalysis::MustPointerAnalysis(Instruction * inst, PointerLattice< map<string, set<Value*,valueComp> > > * incoming) : PointerAnalysis(inst, incoming) { }
 
 // will be a join
-PointerLattice * MustPointerAnalysis::merge(PointerLattice * edge_1, PointerLattice * edge_2) {
+PointerLattice< map<string, set<Value*,valueComp> > > * MustPointerAnalysis::merge(PointerLattice< map<string, set<Value*,valueComp> > > * edge_1, PointerLattice< map<string, set<Value*,valueComp> > > * edge_2) {
 	map<string,set<Value*,valueComp> > outgoingEdge;
 	if (edge_1->isTop() || edge_2->isTop()) {
-		return new PointerLattice(true, false, outgoingEdge); // return Top
+		return new PointerLattice< map<string, set<Value*,valueComp> > >(true, false, outgoingEdge); // return Top
 	}
 	else if (edge_1->isBottom() && edge_2->isBottom()) {
-		return new PointerLattice(false, true, outgoingEdge);
+		return new PointerLattice< map<string, set<Value*,valueComp> > >(false, true, outgoingEdge);
 	}
 	else if (edge_1->isBottom()) {
-		return new PointerLattice(false, false, edge_2->getFacts());
+		return new PointerLattice< map<string, set<Value*,valueComp> > >(false, false, edge_2->getFacts());
 	}
 	else if (edge_2->isBottom()) {
-		return new PointerLattice(false, false, edge_1->getFacts());
+		return new PointerLattice< map<string, set<Value*,valueComp> > >(false, false, edge_1->getFacts());
 	}
 
 	map<string, set<Value*,valueComp> > edge1 = edge_1->getFacts();
@@ -161,25 +161,25 @@ PointerLattice * MustPointerAnalysis::merge(PointerLattice * edge_1, PointerLatt
         }
     }
 
-    return new PointerLattice(false, false, outgoingEdge);
+    return new PointerLattice< map<string, set<Value*,valueComp> > >(false, false, outgoingEdge);
 }
 
-MayPointerAnalysis::MayPointerAnalysis(Instruction * inst, PointerLattice * incoming) : PointerAnalysis(inst, incoming) { } 
+MayPointerAnalysis::MayPointerAnalysis(Instruction * inst, PointerLattice< map<string, set<Value*,valueComp> > > * incoming) : PointerAnalysis(inst, incoming) { } 
 
 // will be a join
-PointerLattice * MayPointerAnalysis::merge(PointerLattice * edge_1, PointerLattice * edge_2) {
+PointerLattice< map<string, set<Value*,valueComp> > > * MayPointerAnalysis::merge(PointerLattice< map<string, set<Value*,valueComp> > > * edge_1, PointerLattice< map<string, set<Value*,valueComp> > > * edge_2) {
 	map<string,set<Value*,valueComp> > outgoingEdge;
 	if (edge_1->isTop() || edge_2->isTop()) {
-		return new PointerLattice(true, false, outgoingEdge); // return Top
+		return new PointerLattice< map<string, set<Value*,valueComp> > >(true, false, outgoingEdge); // return Top
 	}
 	else if (edge_1->isBottom() && edge_2->isBottom()) {
-		return new PointerLattice(false, true, outgoingEdge);
+		return new PointerLattice< map<string, set<Value*,valueComp> > >(false, true, outgoingEdge);
 	}
 	else if (edge_1->isBottom()) {
-		return new PointerLattice(false, false, edge_2->getFacts());
+		return new PointerLattice< map<string, set<Value*,valueComp> > >(false, false, edge_2->getFacts());
 	}
 	else if (edge_2->isBottom()) {
-		return new PointerLattice(false, false, edge_1->getFacts());
+		return new PointerLattice< map<string, set<Value*,valueComp> > >(false, false, edge_1->getFacts());
 	}
 
 	map<string, set<Value*,valueComp> > edge1 = edge_1->getFacts();
@@ -192,7 +192,7 @@ PointerLattice * MayPointerAnalysis::merge(PointerLattice * edge_1, PointerLatti
         outgoingEdge[j->first].insert(j->second.begin(), j->second.end());
     }
 
-    return new PointerLattice(false, false, outgoingEdge);
+    return new PointerLattice< map<string, set<Value*,valueComp> > >(false, false, outgoingEdge);
 }
 
 
