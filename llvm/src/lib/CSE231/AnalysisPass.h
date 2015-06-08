@@ -28,7 +28,6 @@
 using namespace llvm;
 using namespace std;
 
-//namespace {
     template<class T,class U>
 	struct AnalysisPass : public FunctionPass {
 	
@@ -194,7 +193,4 @@ using namespace std;
 
 		}
 	};
-//}
 
-//char AnalysisPass<T,U>::ID = 0;
-//static RegisterPass<AvailableExprPass> X("avail_expr", "AvailableExpr Pass");
