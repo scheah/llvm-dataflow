@@ -1,3 +1,6 @@
+#ifndef _LATTICE_T_H
+#define _LATTICE_T_H
+
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Module.h"
@@ -88,4 +91,6 @@ template <class T>
 bool Lattice<T>::isBottom() {
 	return _isBottom;
 }
+
+#endif
 
