@@ -46,7 +46,7 @@ namespace {
 				errs().write_escaped(B->getName()) << "\n";
 				
 				// check predecessors to perform merge
-				vector< AvailableExprLattice* > predecessorEdges;
+				vector< Lattice<ExpressionContainer>* > predecessorEdges;
 				errs() << "\tPredecessors:\n";
 				for (pred_iterator PI = pred_begin(B); PI != pred_end(B); ++PI) {
   					BasicBlock *pred = *PI;
@@ -60,13 +60,13 @@ namespace {
 					else {
 						errs() << "\t\t\tNo incoming edge from this, pushing bottom (full set)\n";
 						ExpressionContainer empty;
-						predecessorEdges.push_back(new AvailableExprLattice(false,true,empty)); //mem leak here
+						predecessorEdges.push_back(new Lattice<ExpressionContainer>(false,true,empty)); //mem leak here
 					}
 				}
 				// perform mergings	
 				// if no predecessors: incomingEdge will be bottom
 				ExpressionContainer empty;		
-				AvailableExprLattice * incomingEdge = new AvailableExprLattice(false,true,empty);
+				Lattice<ExpressionContainer> * incomingEdge = new Lattice<ExpressionContainer>(false,true,empty);
 				if (predecessorEdges.size() == 1)
 					incomingEdge = predecessorEdges.front();
                 else if (predecessorEdges.size() >= 2) {
@@ -126,7 +126,7 @@ namespace {
 					errs() << "Begin !!!LOOP!!! block with name: ";
 					errs().write_escaped(currentBlock->getName()) << "\n";
 					// check predecessors to perform merge
-					vector< AvailableExprLattice * > predecessorEdges;
+					vector< Lattice<ExpressionContainer> * > predecessorEdges;
 					errs() << "\tPredecessors:\n";
 					for (pred_iterator PI = pred_begin(currentBlock); PI != pred_end(currentBlock); ++PI) {
 						BasicBlock *pred = *PI;
@@ -139,11 +139,11 @@ namespace {
 						else {
 							errs() << "\t\t\tNo incoming edge from this, pushing bottom (full set)\n";
 							ExpressionContainer empty;
-							predecessorEdges.push_back(new AvailableExprLattice(false,true,empty)); //mem leak here
+							predecessorEdges.push_back(new Lattice<ExpressionContainer>(false,true,empty)); //mem leak here
 						}
 					}
 					// perform mergings			
-					AvailableExprLattice * incomingEdge;
+					Lattice<ExpressionContainer> * incomingEdge;
 					if (predecessorEdges.size() == 1)
 						incomingEdge = predecessorEdges.front();
 					else if (predecessorEdges.size() >= 2) {
@@ -159,7 +159,7 @@ namespace {
 					for (unsigned int j = 0; j < blockInstAnalysis[currentBlock->getName()].size(); j++) { 
 						errs() << "\t\t";
 						AvailableExprAnalysis * analysis = blockInstAnalysis[currentBlock->getName()][j];
-						AvailableExprLattice * originalOut = analysis->getOutgoingEdge();
+						Lattice<ExpressionContainer> * originalOut = analysis->getOutgoingEdge();
 						analysis->setIncomingEdge(incomingEdge);
 						analysis->applyFlowFunction();
 						analysis->getInstruction()->dump();

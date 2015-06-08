@@ -1,12 +1,12 @@
 #include "AvailableExprAnalysis.h"
 #include "llvm/Support/raw_ostream.h"
 
-AvailableExprAnalysis::AvailableExprAnalysis(Instruction * inst, AvailableExprLattice * incoming) {
+AvailableExprAnalysis::AvailableExprAnalysis(Instruction * inst, Lattice<ExpressionContainer> * incoming) {
 	_instruction = inst;
 	ExpressionContainer empty;
-	_incomingEdge = new AvailableExprLattice(false,true,empty);
+	_incomingEdge = new Lattice<ExpressionContainer>(false,true,empty);
 	*_incomingEdge = *incoming;
-	_outgoingEdge = new AvailableExprLattice(false,true,empty);
+	_outgoingEdge = new Lattice<ExpressionContainer>(false,true,empty);
 }
 
 void AvailableExprAnalysis::applyFlowFunction() {
@@ -22,28 +22,28 @@ Instruction * AvailableExprAnalysis::getInstruction() {
     return _instruction;
 }
 
-AvailableExprLattice * AvailableExprAnalysis::getOutgoingEdge() {
+Lattice<ExpressionContainer> * AvailableExprAnalysis::getOutgoingEdge() {
     return _outgoingEdge;
 }
 
-void AvailableExprAnalysis::setIncomingEdge(AvailableExprLattice * incoming) {    
+void AvailableExprAnalysis::setIncomingEdge(Lattice<ExpressionContainer> * incoming) {    
     *_incomingEdge = *incoming;
 }
 
 // will be a join
-AvailableExprLattice * AvailableExprAnalysis::merge(AvailableExprLattice * edge_1, AvailableExprLattice * edge_2) {
+Lattice<ExpressionContainer> * AvailableExprAnalysis::merge(Lattice<ExpressionContainer> * edge_1, Lattice<ExpressionContainer> * edge_2) {
 	ExpressionContainer outgoingEdge;
 	if (edge_1->isTop() || edge_2->isTop()) {
-		return new AvailableExprLattice(true, false, outgoingEdge); // return Top
+		return new Lattice<ExpressionContainer>(true, false, outgoingEdge); // return Top
 	}
 	else if (edge_1->isBottom() && edge_2->isBottom()) {
-		return new AvailableExprLattice(false, true, outgoingEdge);
+		return new Lattice<ExpressionContainer>(false, true, outgoingEdge);
 	}
 	else if (edge_1->isBottom()) {
-		return new AvailableExprLattice(false, false, edge_2->getFacts());
+		return new Lattice<ExpressionContainer>(false, false, edge_2->getFacts());
 	}
 	else if (edge_2->isBottom()) {
-		return new AvailableExprLattice(false, false, edge_1->getFacts());
+		return new Lattice<ExpressionContainer>(false, false, edge_1->getFacts());
 	}
 	map<string,Expression*> edge1 = edge_1->getFacts().getMap();
 	map<string,Expression*> edge2 = edge_2->getFacts().getMap();
@@ -58,10 +58,10 @@ AvailableExprLattice * AvailableExprAnalysis::merge(AvailableExprLattice * edge_
         }
     }
     
-    return new AvailableExprLattice(false, false, outgoingEdge);
+    return new Lattice<ExpressionContainer>(false, false, outgoingEdge);
 }
 
-bool AvailableExprAnalysis::equal(AvailableExprLattice * edge_1, AvailableExprLattice * edge_2) {
+bool AvailableExprAnalysis::equal(Lattice<ExpressionContainer> * edge_1, Lattice<ExpressionContainer> * edge_2) {
 	if(edge_1->isTop() && edge_2->isTop()) 
 		return true;
 	else if(edge_1->isBottom() && edge_2->isBottom())
