@@ -265,14 +265,13 @@ void ConstantPropAnalysis::handleConditionalBranchInst(BranchInst * inst) {
 	// a != 0
 	// false will change, true will not
 
-	*_outgoingEdge = *_incomingEdge;//temp may remove later
+	*_outgoingEdge = *_incomingEdge;
+	*_outgoingTrueEdge  = *_incomingEdge;
+	*_outgoingFalseEdge = *_incomingEdge;
 	map<string,ConstantInt*> trueMap = _incomingEdge->getFacts();
 	map<string,ConstantInt*> falseMap = _incomingEdge->getFacts();
-
 	Value * condition = inst->getCondition();
 	if (!ICmpInst::classof(condition)) { // no information, just copy and exit
-		*_outgoingTrueEdge  = *_incomingEdge;
-		*_outgoingFalseEdge = *_incomingEdge;
 		return;
 	}
 	else {
@@ -283,32 +282,26 @@ void ConstantPropAnalysis::handleConditionalBranchInst(BranchInst * inst) {
 		ConstantInt * rhsConstant = tryGetConstantValue(rhs);
 		ConstantInt * lhsConstant = tryGetConstantValue(lhs);
 		if ((lhsConstant && rhsConstant) || (!lhsConstant && !rhsConstant)) { //both constants, no information,just copy and exit
-			*_outgoingTrueEdge  = *_incomingEdge;
-			*_outgoingFalseEdge = *_incomingEdge;
 			return;
 		}
 		else if(rhsConstant)  { //rhs is a constant int, but lhs is not
 			if(predicate == CmpInst::ICMP_EQ) { // X == C
 				trueMap[lhs->getName().str()] = rhsConstant;
 				_outgoingTrueEdge->setNewFacts(false, false, trueMap);
-				*_outgoingFalseEdge = *_incomingEdge;
 			}
 			else if(predicate == CmpInst::ICMP_NE) { // X != C
 				falseMap[lhs->getName().str()] = rhsConstant;
 				_outgoingFalseEdge->setNewFacts(false, false, falseMap);
-				*_outgoingTrueEdge = *_incomingEdge;
 			}
 		}
 		else if(lhsConstant) {  //lhs is a constant int, but rhs is not
 			if(predicate == CmpInst::ICMP_EQ) { // C == X
 				trueMap[rhs->getName().str()] = lhsConstant;
 				_outgoingTrueEdge->setNewFacts(false, false, trueMap);
-				*_outgoingFalseEdge = *_incomingEdge;
 			}
 			else if(predicate == CmpInst::ICMP_NE) { // C != X
 				falseMap[rhs->getName().str()] = lhsConstant;
 				_outgoingFalseEdge->setNewFacts(false, false, falseMap);
-				*_outgoingTrueEdge = *_incomingEdge;
 			}
 		}
 		else {
