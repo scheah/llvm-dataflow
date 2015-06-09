@@ -202,9 +202,6 @@ void ConstantPropAnalysis::handleBinaryOp(Instruction * inst) {
     ConstantInt * operandConstant1 = tryGetConstantValue(inst->getOperand(0));
     ConstantInt * operandConstant2 = tryGetConstantValue(inst->getOperand(1));
 
-    errs() << "Operands:  " <<  inst->getOperand(0)->getName().str() << "\t" << inst->getOperand(1)->getName().str() <<
-    "\tdest" << inst->getOperandUse(0).getUser()->getName().str() << "\n";
-
     if (operandConstant1 == NULL || operandConstant2 == NULL) {
 		_outgoingEdge->setNewFacts(false, false, constantMap);
         errs() << "No constant in binary op or variable is not in incoming edge.\n";
@@ -248,6 +245,10 @@ void ConstantPropAnalysis::handleBinaryOp(Instruction * inst) {
 
         case Instruction::Xor:
             result = operand1 ^ operand2;
+            break;
+
+        default:
+            constantMap.erase(dest);
             break;
     }
 

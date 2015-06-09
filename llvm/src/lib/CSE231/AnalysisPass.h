@@ -57,7 +57,7 @@ using namespace std;
 					errs() << "\n";
 					// get final instruction's outgoing edge from each predecessor block
 					if (!blockInstAnalysis[pred->getName()].empty()) {// some predecessors have not been visited (a loop edge from a future block)
-						predecessorEdges.push_back(blockInstAnalysis[pred->getName()].back()->getOutgoingEdge());
+						predecessorEdges.push_back(blockInstAnalysis[pred->getName()].back()->getOutgoingEdge( &(*B) ));
 					}
 					else {
 						errs() << "\t\t\tNo incoming edge from this, pushing bottom (full set)\n";
@@ -137,7 +137,7 @@ using namespace std;
 						errs() << "\n";
 						// get final instruction's outgoing edge from each predecessor block
 						if (!blockInstAnalysis[pred->getName()].empty()) // some predecessors have not been visited (a loop edge from a future block)
-							predecessorEdges.push_back(blockInstAnalysis[pred->getName()].back()->getOutgoingEdge());
+							predecessorEdges.push_back(blockInstAnalysis[pred->getName()].back()->getOutgoingEdge(currentBlock));
 						else {
 							errs() << "\t\t\tNo incoming edge from this, pushing bottom (full set)\n";
 							U empty;

@@ -45,23 +45,7 @@ Lattice< map<string, set<Value*,valueComp> > > * PointerAnalysis::getOutgoingEdg
 }
 
 Lattice< map<string, set<Value*,valueComp> > > * PointerAnalysis::getOutgoingEdge(BasicBlock * toSuccessor) {
-	if(!_isConditionalBranch) {
-		//errs() << "[PointerAnalysis::getOutgoingEdge(BasicBlock * toSuccessor)] not a conditional branch predecessor, return normal outgoing edge\n";
-		return _outgoingEdge;
-	}
-	BranchInst * branchInst = (BranchInst * )_instruction;
-	BasicBlock * trueBlock = branchInst->getSuccessor(0);
-	BasicBlock * falseBlock = branchInst->getSuccessor(1);
-	if (toSuccessor == trueBlock) {
-		return _outgoingTrueEdge;
-	}
-	else if(toSuccessor == falseBlock) {
-		return _outgoingFalseEdge;
-	}
-	else {
-		errs() << "[PointerAnalysis::getOutgoingEdge(BasicBlock * toSuccessor)] the world is weird.\n";
-	}
-	return NULL;
+    return _outgoingEdge;
 }
 
 void PointerAnalysis::setIncomingEdge(Lattice< map<string, set<Value*,valueComp> > > * incoming) {    

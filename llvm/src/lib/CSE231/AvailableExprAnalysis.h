@@ -12,6 +12,7 @@ public:
 	AvailableExprAnalysis(Instruction * inst, Lattice<ExpressionContainer> * incoming);
     Instruction * getInstruction();
     Lattice<ExpressionContainer> * getOutgoingEdge();
+    Lattice<ExpressionContainer> * getOutgoingEdge(BasicBlock * toSuccessor);
     void setIncomingEdge(Lattice<ExpressionContainer> * incoming);
     void applyFlowFunction();
     void dump();

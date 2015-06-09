@@ -26,6 +26,10 @@ Lattice<ExpressionContainer> * AvailableExprAnalysis::getOutgoingEdge() {
     return _outgoingEdge;
 }
 
+Lattice<ExpressionContainer> * AvailableExprAnalysis::getOutgoingEdge(BasicBlock * toSucessor) {
+    return _outgoingEdge;
+}
+
 void AvailableExprAnalysis::setIncomingEdge(Lattice<ExpressionContainer> * incoming) {    
     *_incomingEdge = *incoming;
 }
