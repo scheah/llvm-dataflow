@@ -55,8 +55,9 @@ Lattice<ExpressionContainer> * AvailableExprAnalysis::merge(Lattice<ExpressionCo
     for (map<string,Expression*>::iterator i = edge1.begin(); i != edge1.end(); i++) {
         for (map<string,Expression*>::iterator j = edge2.begin(); j != edge2.end(); j++) {
             // If item is in both edges and are equal, add to outgoing edge
-            if (i->first == j->first && i->second->isEqualTo(j->second)) {
-                outgoingEdge.getMap()[i->first] = i->second;  
+            if (i->first == j->first && i->second->isEqual(j->second)) {
+                errs() << "ADD TO OUTGOING\n";
+                outgoingEdge.addExpression(i->first,i->second);
                 break;
             }
         }
