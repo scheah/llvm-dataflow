@@ -57,10 +57,13 @@ using namespace std;
 					errs() << "\n";
 					// get final instruction's outgoing edge from each predecessor block
 					if (!blockInstAnalysis[pred->getName()].empty()) {// some predecessors have not been visited (a loop edge from a future block)
-						predecessorEdges.push_back(blockInstAnalysis[pred->getName()].back()->getOutgoingEdge( &(*B) ));
+						Lattice<U>* singleEdge = blockInstAnalysis[pred->getName()].back()->getOutgoingEdge( &(*B) );
+						predecessorEdges.push_back(singleEdge);
+						T::dump(singleEdge);
+						
 					}
 					else {
-						errs() << "\t\t\tNo incoming edge from this, pushing bottom (full set)\n";
+						errs() << "\t\t\tNo incoming edge from this, pushing bottom\n";
 						U empty;
 						predecessorEdges.push_back(new Lattice<U>(false,true,empty)); //mem leak here
 					}
@@ -136,10 +139,13 @@ using namespace std;
 						errs().write_escaped(pred->getName());
 						errs() << "\n";
 						// get final instruction's outgoing edge from each predecessor block
-						if (!blockInstAnalysis[pred->getName()].empty()) // some predecessors have not been visited (a loop edge from a future block)
-							predecessorEdges.push_back(blockInstAnalysis[pred->getName()].back()->getOutgoingEdge(currentBlock));
+						if (!blockInstAnalysis[pred->getName()].empty())  {// some predecessors have not been visited (a loop edge from a future block)
+							Lattice<U>* singleEdge = blockInstAnalysis[pred->getName()].back()->getOutgoingEdge( currentBlock );
+							predecessorEdges.push_back(singleEdge);
+							T::dump(singleEdge);
+						}
 						else {
-							errs() << "\t\t\tNo incoming edge from this, pushing bottom (full set)\n";
+							errs() << "\t\t\tNo incoming edge from this, pushing bottom\n";
 							U empty;
 							predecessorEdges.push_back(new Lattice<U>(false,true,empty)); //mem leak here
 						}

@@ -33,6 +33,8 @@ void PointerAnalysis::applyFlowFunction() {
     }
 	else { //temp 
 		*_outgoingEdge = *_incomingEdge;
+		*_outgoingTrueEdge = *_incomingEdge;
+		*_outgoingFalseEdge = *_incomingEdge;
 	}
 }
 
@@ -103,11 +105,10 @@ void PointerAnalysis::dump(Lattice<map<string,set<Value*,valueComp> > > * lattic
                 errs() << (*j)->getName().str();
                                                                 
                 if (++j != i->second.end()) {
-                    errs() << ",";
+                    errs() << ", ";
                 }
-
-                errs() << "\n";
             }
+			errs() << "\n";
         }
     }
 }
@@ -133,8 +134,10 @@ void PointerAnalysis::handleLoadInst(LoadInst * loadInst) {
 	
     const Type* type = loadInst->getOperand(0)->getType();
     if (type->isPointerTy() && type->getContainedType(0)->isPointerTy()) {
-        edgeMap[loadInst->getOperandUse(0).getUser()->getName().str()].clear();
-        edgeMap[loadInst->getOperandUse(0).getUser()->getName().str()].insert(loadInst->getOperand(0));
+        edgeMap.erase(loadInst->getOperandUse(0).getUser()->getName().str());
+		if (edgeMap.count(loadInst->getOperand(0)->getName().str()) > 0) {
+        	edgeMap[loadInst->getOperandUse(0).getUser()->getName().str()].insert(edgeMap[loadInst->getOperand(0)->getName().str()].begin(), edgeMap[loadInst->getOperand(0)->getName().str()].end());
+		}
     }
     
     _outgoingEdge->setNewFacts(false,false,edgeMap);
