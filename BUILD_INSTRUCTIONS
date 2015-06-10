@@ -1,0 +1,24 @@
+To build:
+Drag drop files into your root folder for the llvm installation.
+You will be prompted to merge folders, do so.
+
+make (you might need the -B flag to properly build)
+
+Benchmark test names:
+-branchloop
+-expression
+-must-pointer
+-pointer
+-range
+
+Benchmark scripts:
+*Note you may need to use dos2unix if there are problems with sh files
+
+Constant Propagation Analysis: sh runscripts/constantprop.sh $BENCHMARKS/{name of benchmark test}
+Available Expression Analysis: sh runscripts/avail_expr.sh $BENCHMARKS/{name of benchmark test}
+Range Analysis: sh runscripts/RangeAnalysis.sh $BENCHMARKS/{name of benchmark test}
+May Pointer Analysis: sh runscripts/may-pointer.sh $BENCHMARKS/{name of benchmark test}
+Must Pointer Analysis: sh runscripts/must-pointer.sh $BENCHMARKS/{name of benchmark test}
+
+Results will be printed to stderr, or the console.
+To pipe output to a file append "2> outputfile.extension" 
